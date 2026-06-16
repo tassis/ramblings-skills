@@ -16,9 +16,24 @@ This repo provides two layers:
 - skills are manually or contextually invoked, not forced globally
 - commands are convenience entrypoints, not hidden workflow overrides
 
-## Install from local clone
+## Install from git-backed plugin spec
 
-Clone this repo anywhere, then add the plugin path to `opencode.json`:
+Add this to `opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "ramblings-skills@git+https://github.com/tassis/ramblings-skills.git"
+  ]
+}
+```
+
+Restart OpenCode after changing config.
+
+## Local development install
+
+If you are testing from a local clone instead of GitHub, you can still use a direct plugin path:
 
 ```json
 {
@@ -28,12 +43,6 @@ Clone this repo anywhere, then add the plugin path to `opencode.json`:
   ]
 }
 ```
-
-Restart OpenCode after changing config.
-
-## Intended future install direction
-
-This repo is structured so it can later be used with git-backed plugin installation instead of a fixed local path.
 
 ## Commands provided by the plugin
 

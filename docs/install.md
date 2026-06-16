@@ -1,12 +1,21 @@
 # Install
 
+## Recommended install
+
+Add this to `opencode.json` and restart OpenCode:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "ramblings-skills@git+https://github.com/tassis/ramblings-skills.git"
+  ]
+}
+```
+
 ## Local clone install
 
-1. Clone this repo to any location.
-2. Add the plugin path to `opencode.json`.
-3. Restart OpenCode.
-
-Example:
+If you are developing from a local checkout, use a direct plugin path instead:
 
 ```json
 {

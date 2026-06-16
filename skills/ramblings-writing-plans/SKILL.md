@@ -45,7 +45,9 @@ That means the plan must include:
 - the order of operations;
 - how to validate each risky step;
 - where automated tests are realistic and where they are not;
-- what manual verification is required when tests are weak.
+- what manual verification is required when tests are weak;
+- execution state markers so a later session can resume without guessing;
+- completion criteria that make each task safe to re-check before rerunning.
 
 ## Plan shape
 
@@ -67,6 +69,20 @@ Every plan should start with:
 
 Then add task sections.
 
+Immediately after the header, add an execution tracker:
+
+```markdown
+## Execution Tracker
+
+- [ ] Task 1: [short name]
+- [ ] Task 2: [short name]
+- [ ] Task 3: [short name]
+```
+
+This tracker starts unchecked. It exists so implementation sessions can update progress in-place instead of reconstructing state from memory.
+
+The tracker is a compact overview only. If the tracker and a task's `Status:` ever disagree, treat the task's `Status:` field as the source of truth.
+
 ## Task structure
 
 Use this format:
@@ -75,6 +91,8 @@ Use this format:
 ## Task N: [short name]
 
 **Why:** [why this task exists]
+
+**Status:** [not started | in progress | blocked | complete]
 
 **Files:**
 - Read: `path/to/file`
@@ -91,6 +109,14 @@ Use this format:
 - Run: `exact command`
 - Expect: [concrete expected result]
 
+**Completion Criteria:**
+- [specific observable condition that means this task is actually done]
+- [use file state, test result, command output, or visible behavior rather than abstract intent]
+
+**Re-entry / Idempotence Notes:**
+- [how to tell whether this task was already completed]
+- [what to re-check before rerunning]
+
 **Notes / Risks:**
 - [edge case, dependency, ambiguity, migration concern]
 ```
@@ -103,6 +129,9 @@ Use this format:
 4. If you mention tests, say exactly which tests or commands.
 5. If automated tests are not practical, say so explicitly and specify manual verification.
 6. Follow existing project structure unless the user is intentionally restructuring it.
+7. Every task must have a visible status field and completion criteria.
+8. Every risky or multi-step task must say how to detect "already done" before re-executing it.
+9. A task is not complete until its verification has passed and its status/tracker has been updated.
 
 ## No-placeholder rule
 
@@ -126,6 +155,7 @@ For old or fragile codebases:
 2. If behavior is unclear, include a reproduction or observation step.
 3. If a risky file is large or confusing, say what part to inspect first.
 4. Prefer minimal, reversible changes over cleanup sprees.
+5. If execution may span multiple sessions, make the tracker and task statuses sufficient for another agent to resume safely.
 
 ## Before finishing the plan
 
@@ -136,3 +166,4 @@ Self-check:
 3. Does each risky task have verification?
 4. Did you clearly distinguish automated vs manual verification?
 5. Did you avoid over-design for a maintenance task?
+6. Can an implementer tell what is done, what is blocked, and what can be safely retried?

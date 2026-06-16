@@ -19,6 +19,8 @@ Usually one of these exists already:
 
 If there is no real plan yet, stop and use `ramblings-writing-plans` first.
 
+If there is a plan but it does not expose execution state clearly enough to resume safely, add or normalize a checklist/tracker before doing broad multi-step work.
+
 ## Goal
 
 Implement the plan without drifting away from it, while still adapting when reality disagrees with the document.
@@ -33,6 +35,7 @@ Follow these rules:
 4. Do not mix unrelated cleanup into planned work.
 5. If the plan is wrong or stale, update the plan instead of silently freelancing.
 6. Do not create commits unless the user explicitly asks.
+7. Treat execution state as part of the deliverable, not as disposable session memory.
 
 ## Basic flow
 
@@ -52,6 +55,8 @@ Do not execute the whole plan at once.
 
 Pick the next smallest meaningful task and focus on that slice only.
 
+Choose it from an explicit tracker, checkbox list, or status field whenever one exists.
+
 ### 3. Check reality before coding
 
 Before implementing a task, confirm:
@@ -59,6 +64,7 @@ Before implementing a task, confirm:
 - the referenced files still exist;
 - the code still roughly matches the assumptions;
 - the task is still valid in the current branch/state.
+- the task is not already complete according to the plan's completion criteria or current code state.
 
 If reality has changed, update the plan or record the deviation.
 
@@ -80,6 +86,18 @@ Keep task tracking current.
 
 If the plan uses checkboxes, update them.
 If you discover a blocker, note it clearly rather than skipping ahead invisibly.
+If the plan only has prose tasks, add a minimal tracker or status markers before continuing deeper execution.
+If the tracker and a task's `Status:` disagree, fix the plan state and use the task `Status:` plus current code reality as the source of truth.
+
+## Idempotent execution posture
+
+Treat each task as resumable work:
+
+1. Re-read the task's completion criteria before making changes.
+2. Check whether the step is already complete before re-applying edits.
+3. Prefer narrowly scoped edits that can be safely re-verified.
+4. Record partial progress or blockers in the plan instead of keeping them only in chat.
+5. When a rerun would be destructive or duplicative, stop and update the plan with the new reality.
 
 ## When to stop and re-plan
 
@@ -98,7 +116,10 @@ After each meaningful task:
 
 - run the specific tests or commands tied to that task;
 - if automated checks are weak, perform explicit manual verification;
+- update the task status or checklist only after the verification for that task passes;
 - do not wait until the very end to discover obvious breakage.
+
+Do not mark a task complete based on code edits alone.
 
 Before calling the overall work complete, use `ramblings-verification`.
 
@@ -121,6 +142,9 @@ When reporting progress, prefer:
 **Verified:**
 - `command` — result
 
+**Plan state updated:**
+- [checkbox/status/completion note updated in plan]
+
 **Blocked / Changed:**
 - [issue or plan deviation]
 
@@ -135,3 +159,4 @@ When reporting progress, prefer:
 - Do not batch many risky tasks before verifying.
 - Do not declare the plan complete just because code was written.
 - Do not commit, merge, or finalize branches by default.
+- Do not rely on unstated chat memory for which steps are done or safe to retry.
