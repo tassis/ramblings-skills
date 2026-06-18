@@ -1,6 +1,6 @@
 ---
 name: ramblings-testing-strategy
-description: Testing strategy, TDD decision, weak tests, legacy tests, manual verification fallback, reproduction-first testing. Use when deciding how to validate changes in a project: whether to use TDD, add regression tests, rely on focused repros, or fall back to manual verification. This is manual and should not trigger for every task automatically.
+description: Testing strategy, TDD decision, weak tests, legacy tests, manual verification fallback, reproduction-first testing. Use only when the validation approach itself is unclear, risky, or explicitly requested before implementation: whether to use TDD, add regression tests, rely on focused repros, or fall back to manual verification. This is manual and should not trigger for every task automatically.
 ---
 
 # Ramblings Testing Strategy
@@ -8,6 +8,8 @@ description: Testing strategy, TDD decision, weak tests, legacy tests, manual ve
 Use this skill when testing approach itself is the question.
 
 This skill is intentionally manual. It should help you choose a validation strategy, not force TDD onto every task.
+
+This is a pre-change validation-planning skill, not a final completion-evidence skill.
 
 ## Goal
 
@@ -107,5 +109,11 @@ When these signs appear, fall back deliberately rather than awkwardly forcing ps
 ## Pairings
 
 - use `ramblings-systematic-debugging` when testing depends on root-cause investigation;
-- use `ramblings-verification` when summarizing final confidence;
+- use `ramblings-ready-check` when summarizing final confidence and readiness;
 - use `ramblings-writing-plans` if the testing strategy needs to be embedded in a larger implementation plan.
+
+## Not for
+
+- automatic invocation on every code change;
+- final readiness or completion status;
+- cases where the validation approach is already obvious and uncontroversial.

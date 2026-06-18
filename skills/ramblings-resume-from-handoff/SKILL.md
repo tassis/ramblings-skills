@@ -60,7 +60,7 @@ Depending on the state, hand off to:
 - `ramblings-writing-plans`
 - `ramblings-implementing-plans`
 - `ramblings-systematic-debugging`
-- `ramblings-verification`
+- `ramblings-ready-check`
 
 ## Suggested output
 

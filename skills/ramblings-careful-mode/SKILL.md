@@ -1,11 +1,17 @@
 ---
 name: ramblings-careful-mode
-description: Careful mode, high-risk mode, conservative execution, scope freeze, analyze before editing. Use when the task is risky enough that speed should be traded for caution: legacy systems, unclear behavior, sensitive scripts, unfamiliar deployment paths, or changes where an incorrect move would be expensive.
+description: Careful mode, high-risk mode, conservative execution, scope freeze, analyze before editing. Use as an explicit or conditionally activated high-risk posture when the task is risky enough that speed should be traded for caution: legacy systems, unclear behavior, sensitive scripts, unfamiliar deployment paths, or changes where an incorrect move would be expensive. Do not treat this as an ordinary phase workflow.
 ---
 
 # Ramblings Careful Mode
 
 Use this skill when the task needs a deliberately conservative posture.
+
+This is a modifier/posture skill, not a normal phase workflow.
+
+- Use it explicitly when the user already knows the task is risky.
+- Or apply its posture conditionally after investigation/execution reveals real risk signals.
+- Do not assume all planning or implementation should start in careful mode by default.
 
 ## When to use
 
@@ -39,7 +45,13 @@ In careful mode:
 - `ramblings-investigation`
 - `ramblings-writing-plans`
 - `ramblings-systematic-debugging`
-- `ramblings-verification`
+- `ramblings-ready-check`
+
+## Not for
+
+- ordinary low-risk planning;
+- routine one-file changes;
+- generic brainstorming without meaningful risk signals.
 
 ## What not to do
 

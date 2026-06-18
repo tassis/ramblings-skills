@@ -1,11 +1,16 @@
 ---
 name: ramblings-workflow
-description: End-to-end project workflow, feature workflow, new subproject planning, website planning, app planning, spec to implementation flow. Use when the user is starting a substantial project or feature from discussion through design, spec, implementation planning, and execution, especially when they already mention architecture, stack choices, project creation, or a full build-out. Do not use for bug triage, one-off spec writing, or standalone verification.
+description: End-to-end project workflow, feature workflow, new subproject planning, website planning, app planning, spec to implementation flow. Use as command-first umbrella guidance when the user is starting a substantial project or feature from discussion through design, spec, implementation planning, and execution, especially when they already mention architecture, stack choices, project creation, or a full build-out. Do not use for bug triage, one-off spec writing, or standalone verification.
 ---
 
 # Ramblings Workflow
 
 Use this skill as the full-flow entry point when the user is clearly starting a substantial project or feature and expects an end-to-end process.
+
+This is an umbrella workflow, not a narrow phase skill.
+
+- Prefer it as backing guidance for an explicit full-lifecycle entrypoint such as `/start-feature`.
+- Do not let it broadly auto-trigger when a narrower skill already matches the current phase.
 
 This skill is for cases like:
 
@@ -23,17 +28,6 @@ This workflow coordinates the full path:
 5. verification.
 
 It should not trigger for every maintenance task. For one-off spec work, bug investigation, or final verification, prefer the narrower ramblings skills directly.
-
-## Artifact locations
-
-When you create written artifacts, place them here:
-
-- specs / design notes: `.ramblings/specs/`
-- implementation plans: `.ramblings/plans/`
-- review notes: `.ramblings/reviews/`
-- debugging notes / reproductions: `.ramblings/debug/`
-
-Create directories only when needed.
 
 ## Artifact locations
 
@@ -77,7 +71,7 @@ Use `ramblings-systematic-debugging` when:
 
 ### 4. Before claiming completion
 
-Use `ramblings-verification` when:
+Use `ramblings-ready-check` when:
 
 - you are about to say the task is done;
 - you changed behavior in a risky area;
@@ -99,6 +93,7 @@ For end-to-end project or feature work, prefer this sequence:
 - Do not use this skill for a standalone bugfix if the user just wants debugging.
 - Do not use this skill for spec-only exploration with no implementation intent yet.
 - Do not use this skill when only final verification is needed.
+- Do not use this skill when the user only wants brainstorming, only wants a spec, or only wants a plan.
 
 ## Guidance
 

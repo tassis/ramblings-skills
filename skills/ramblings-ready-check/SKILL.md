@@ -1,19 +1,19 @@
 ---
-name: ramblings-verification
-description: Existing project verification, done check, weak test coverage, manual verification. Use before claiming a maintenance task is complete, especially when tests are missing, partial, or unreliable. Summarize what was actually verified, what remains unverified, and the residual risk.
+name: ramblings-ready-check
+description: Ready check, verification evidence, completion status, ready-for-review, ready-for-validation, residual risk summary. Use near completion when the main question is what evidence exists and what readiness state can be claimed next.
 ---
 
-# Maintenance Verification
+# Ramblings Ready Check
 
-Use this skill before saying a maintenance task is done.
+Use this skill before claiming that a task, change, review request, or handoff is ready for its next state.
 
 In old or weakly tested codebases, the biggest failure mode is false confidence. This skill prevents that.
 
 ## Core rule
 
-Do not claim completion from code inspection alone.
+Do not claim readiness from code inspection alone.
 
-Completion requires explicit evidence, such as:
+Readiness requires explicit evidence, such as:
 
 - automated tests;
 - focused reproduction checks;
@@ -29,12 +29,30 @@ When relevant, verify these in order:
 3. The changed area still integrates correctly.
 4. No obvious nearby regression was introduced.
 
-## Required completion summary
+## Readiness states
+
+Choose the best current state explicitly:
+
+1. **Ready for review**
+   - implementation exists and should go through focused review next.
+
+2. **Ready for user validation**
+   - implementation exists and the next meaningful check is user or environment-specific validation.
+
+3. **Ready**
+   - verification and review are sufficient for the current workflow.
+
+4. **Not ready**
+   - important verification, fixes, or clarifications are still missing.
+
+## Required summary
 
 Before finishing, summarize using this structure:
 
 ```markdown
-## Verification Summary
+## Ready Check
+
+**Status:** ready for review / ready for user validation / ready / not ready
 
 **Automated checks run:**
 - `command`
@@ -50,6 +68,9 @@ Before finishing, summarize using this structure:
 **Residual risk:**
 - low / medium / high
 - why
+
+**Suggested next step:**
+- review / validation / handoff / follow-up
 ```
 
 ## If tests are weak or missing
@@ -63,7 +84,7 @@ Do not hide that fact. Instead:
 
 ## When to stop and warn
 
-Do not present the task as safely complete if:
+Do not present the task as ready if:
 
 - you could not reproduce the original issue clearly;
 - you changed behavior but ran no meaningful verification;
@@ -78,3 +99,9 @@ In those cases, report partial confidence, not full confidence.
 - If the repo is fragile, mention that explicitly in residual risk.
 - If verification required local assumptions or environment quirks, say so.
 - If the best available proof is manual, make the manual steps reproducible.
+
+## Boundaries
+
+- use `ramblings-testing-strategy` before implementation when the validation approach itself is still the question;
+- use `ramblings-handoff` for future-session context transfer;
+- if a handoff claims readiness, include or reference the result of this ready check.

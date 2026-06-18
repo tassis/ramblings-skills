@@ -7,7 +7,7 @@ This repo provides two layers:
 1. `skills/` — the actual `ramblings-*` skills
 2. `plugin/` — an OpenCode plugin that:
    - registers this repo's `skills/` directory
-   - injects optional commands such as `office-hours` and `plan-ceo-review`
+   - injects optional commands such as `office-hours`, `start-feature`, and `plan-ceo-review`
    - injects a custom primary agent named `conductor`
 
 ## Principles
@@ -49,16 +49,23 @@ If you are testing from a local clone instead of GitHub, you can still use a dir
 
 - `conductor`
 - `office-hours`
+- `start-feature`
 - `plan-ceo-review`
 - `plan-eng-review`
 - `qa-review`
 - `careful`
+- `handoff`
+- `resume-from-handoff`
 - `retro`
 - `investigate`
 - `write-spec`
 - `write-plan`
 - `start-work`
 - `execute-plan`
+
+## Skill taxonomy
+
+For the routing guide, overlap rules, and linked skill index, see [`docs/skills.md`](docs/skills.md).
 
 ## Agent provided by the plugin
 
@@ -70,6 +77,8 @@ Use Conductor when you want a planning surface that can write:
 - `.ramblings/specs/**`
 - `.ramblings/checklists/**`
 - `.ramblings/handoffs/**`
+- `.ramblings/debug/**`
+- `.ramblings/retros/**`
 
 without entering implementation.
 

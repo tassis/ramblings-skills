@@ -4,7 +4,9 @@
 
 ### `skills/`
 
-Contains the actual `ramblings-*` skills. These define workflow guidance such as brainstorming, spec writing, debugging, verification, review, and challenge sessions.
+Contains the actual `ramblings-*` skills. These define workflow guidance such as brainstorming, spec writing, ready checks, debugging, review, and challenge workflows.
+
+See `docs/skills.md` for the current taxonomy, routing rules, and overlap guide.
 
 ### `plugin/`
 
@@ -21,4 +23,4 @@ Contains an OpenCode plugin that registers this repo's `skills/` path, injects o
 
 ## Installation model
 
-The current model assumes the repo is cloned locally and referenced via plugin path. The structure is chosen so future git-backed plugin installation is possible without redesigning the repo.
+The repo supports both git-backed plugin installation and direct local plugin-path development. The layout keeps the same `skills/` and `plugin/` split in either case so the command surface and skill paths stay stable.

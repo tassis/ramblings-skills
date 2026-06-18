@@ -125,7 +125,7 @@ After each meaningful task:
 
 Do not mark a task complete based on code edits alone.
 
-Before calling the overall work complete, use `ramblings-verification`.
+Before calling the overall work complete, use `ramblings-ready-check`.
 
 ## Related skills
 

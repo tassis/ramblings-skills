@@ -1,9 +1,9 @@
 ---
-name: ramblings-challenge-session
-description: Multi-role challenge session, product review, engineering review, QA review, proposal challenge, design challenge. Use when the user wants their current idea, spec, architecture, or plan challenged from multiple perspectives before implementation or commitment. This is optional and should trigger only when the user explicitly wants critique, evaluation, pushback, or multi-role review.
+name: ramblings-challenge-me
+description: Multi-perspective challenge, pressure test, blind-spot review, product/engineering/QA/DevEx critique, proposal challenge. Use when the user wants their current idea, spec, architecture, plan, or in-progress change challenged from multiple relevant perspectives before commitment. This is optional and should trigger only when the user explicitly wants critique, evaluation, pushback, or structured multi-angle review.
 ---
 
-# Ramblings Challenge Session
+# Ramblings Challenge Me
 
 Use this skill when the user wants deliberate pushback from multiple viewpoints.
 
@@ -50,7 +50,7 @@ Use `ramblings-qa-review` when the question is:
 - what verification is missing;
 - what assumptions need to be tested.
 
-## How to use this session
+## How to use this challenge
 
 1. Identify what artifact is being challenged:
    - rough idea
@@ -75,7 +75,7 @@ Use `ramblings-qa-review` when the question is:
 ## Output format
 
 ```markdown
-## Challenge Session Summary
+## Challenge Summary
 
 **Artifact under review:**
 - [idea / spec / plan / change]
@@ -99,3 +99,4 @@ Use `ramblings-qa-review` when the question is:
 - do not use every lens if one or two are enough;
 - be direct and useful, not theatrical;
 - if the review substantially changes the direction, update `.ramblings/specs/` or `.ramblings/plans/`.
+- if the user wants one-question-at-a-time pressure questioning instead of a synthesized critique, use `ramblings-grill-me` instead.

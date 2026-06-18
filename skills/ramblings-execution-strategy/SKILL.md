@@ -1,11 +1,16 @@
 ---
 name: ramblings-execution-strategy
-description: Execution strategy, subagent strategy, parallel execution, inline execution, implementation routing. Use when the work is understood well enough to execute but you need to decide how to execute it: inline, sequentially from a plan, with subagents, or with limited parallelism. Prefer this when orchestration choice affects speed, risk, or reviewability.
+description: Execution strategy, subagent strategy, parallel execution, inline execution, implementation routing. Use only when the execution method itself is the explicit question. Prefer `ramblings-implementing-plans` during real plan execution, where execution-time orchestration should live.
 ---
 
 # Ramblings Execution Strategy
 
 Use this skill when the task is clear enough to execute, but the execution method is still a decision.
+
+This is an orchestration helper, not a normal execution workflow.
+
+- During actual plan execution, prefer `ramblings-implementing-plans`.
+- Use this only when the user explicitly wants to compare execution modes before or outside real execution.
 
 This skill helps choose between:
 
@@ -92,7 +97,13 @@ Git actions remain user-controlled. Do not commit, merge, or create branch-final
 - use `ramblings-writing-plans` before orchestration if the task is still fuzzy;
 - use `ramblings-implementing-plans` when executing a written plan;
 - use `ramblings-requesting-code-review` after major milestones;
-- use `ramblings-verification` before final completion.
+- use `ramblings-ready-check` before final completion.
+
+## Not for
+
+- ordinary plan execution once a real runnable task exists;
+- requirement discovery or design discussion;
+- broad workflow routing when the user did not ask about execution strategy explicitly.
 
 ## Decision cheatsheet
 

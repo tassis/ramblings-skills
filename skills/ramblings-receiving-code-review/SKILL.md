@@ -46,7 +46,7 @@ Choose one:
 
 ### 4. Verify after changes
 
-If the change affects behavior, rerun relevant verification instead of assuming the comment made things better.
+If the change affects behavior, rerun a relevant ready check instead of assuming the comment made things better.
 
 ## When pushback is appropriate
 

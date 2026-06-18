@@ -34,7 +34,7 @@ Gather the minimum context the reviewer needs:
 - what requirement, spec, bug, or plan it maps to;
 - what files matter most;
 - what verification has already been run;
-- what remains uncertain.
+- what remains uncertain, including any ready-check result if review readiness is already being claimed.
 
 ## Review focus
 

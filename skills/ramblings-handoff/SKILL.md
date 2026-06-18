@@ -87,6 +87,7 @@ Include only what the next session actually needs:
 
 ## Guidance
 
+- if the handoff claims the work is ready for review, validation, or completion, reference the latest `ramblings-ready-check` result or include equivalent evidence;
 - optimize for continuation, not storytelling;
 - keep it compact;
 - call out what changed the plan or direction;
