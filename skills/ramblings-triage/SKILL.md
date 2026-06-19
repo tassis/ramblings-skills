@@ -1,6 +1,6 @@
 ---
 name: ramblings-triage
-description: Triage, issue intake, bug-or-feature sorting, information gathering, next-step routing. Use when a report, request, or problem statement is still messy and the first job is to classify it, identify missing information, and decide whether it should go to investigation, debugging, spec writing, or implementation planning.
+description: Triage, issue intake, bug-or-feature sorting, information gathering, next-step routing. Use when a report, request, or problem statement is still messy and the first job is to classify it, identify missing information, and decide whether it should go to investigation, debugging, brief writing, or implementation planning.
 ---
 
 # Ramblings Triage
@@ -45,7 +45,7 @@ Typical routes:
 
 - `ramblings-investigation`
 - `ramblings-systematic-debugging`
-- `ramblings-spec-writing`
+- `ramblings-brief-writing`
 - `ramblings-writing-plans`
 
 ## Suggested output

@@ -1,39 +1,33 @@
 # ramblings
 
-OpenCode workflow framework plugin for discussion, spec writing, planning, execution, review, handoff, archive, and task tracking.
+Ramblings is an OpenCode workflow plugin for structured product and engineering work.
 
-This repo is not just a bag of skills or command shortcuts. It is a workflow framework built around:
+It combines agents, skills, commands, and project-root `.ramblings/` artifacts into one workflow system for:
 
-- `skills/` for workflow semantics, routing, persona, and guidance
-- `plugin/` for command surfaces and agent surfaces
-- project-root `.ramblings/` artifacts for durable workflow state
+- discussion and brief writing
+- implementation planning
+- execution
+- review
+- handoff and resume
+- archive and cleanup
 
-The intended lifecycle is roughly:
+Install the plugin, use the command entrypoints when they fit, and let `.ramblings/` artifacts keep work resumable across sessions.
 
-1. discussion / shaping
-2. spec writing
-3. planning
-4. execution
-5. review
-6. handoff or ready-check
-7. archive / cleanup
+## What you get
 
-The workflow should be read as one system:
+- **Commands** for common workflow entrypoints such as `office-hours`, `start-feature`, `write-brief`, `write-plan`, `start-work`, `challenge-me`, and `handoff`
+- **Agents** for stable planning and review roles: `@conductor` and `@reviewer`
+- **Skills** for workflow phases such as brainstorming, brief writing, planning, execution, debugging, review, and archive
+- **Project-root `.ramblings/` artifacts** that keep plans, checklists, handoffs, debug notes, retros, and archive state durable
 
-- discussion shapes the direction;
-- specs capture it;
-- plans make it executable;
-- `start-work` drives execution;
-- review and ready-check challenge quality;
-- archive cleans the active area for the next session.
+## Typical lifecycle
 
-This repo provides two layers:
-
-1. `skills/` — the actual `ramblings-*` skills
-2. `plugin/` — an OpenCode plugin that:
-   - registers this repo's `skills/` directory
-   - injects optional commands such as `office-hours`, `start-feature`, and `plan-ceo-review`
-   - injects custom primary agents named `conductor` and `reviewer`
+1. discuss or shape the work
+2. write the brief down
+3. turn it into an implementation plan
+4. execute from the plan
+5. review and verify
+6. hand off, resume later, or archive when complete
 
 ## Principles
 
@@ -72,34 +66,25 @@ If you are testing from a local clone instead of GitHub, you can still use a dir
 
 ## Positioning
 
-This plugin should be thought of as a workflow framework for OpenCode.
+Ramblings should be thought of as a workflow plugin for OpenCode.
 
-- Skills carry most workflow behavior.
-- Agents exist when a stable role or permission boundary matters.
-- Commands exist when an entrypoint should be easier to use.
+It uses:
 
-The repo aims for completeness across the workflow, not minimal feature count. Archive, review, planning, execution, and tracking are all treated as parts of the same system rather than unrelated extras.
+- **skills** for workflow semantics and routing
+- **agents** when a stable role or permission boundary matters
+- **commands** when a common entrypoint should be easier to invoke
+- **`.ramblings/` artifacts** when workflow state should remain durable and resumable
 
 ## What do I use when?
 
-- early discussion or feature shaping → `office-hours` or `ramblings-brainstorming`
-- write down a converged idea → `write-spec` or `ramblings-spec-writing`
-- turn an approved direction into execution tasks → `write-plan` or `ramblings-writing-plans`
-- execute an existing plan → `start-work` or `ramblings-implementing-plans`
-- challenge a plan or idea from multiple angles → `ramblings-challenge-me`
-- run a single-lens review → product / engineering / QA / DevEx review skills
+- early discussion or feature shaping → `office-hours`
+- write down a converged discussion brief → `write-brief`
+- turn an approved direction into execution tasks → `write-plan`
+- execute an existing plan → `start-work`
+- challenge a plan or idea from multiple angles → `challenge-me`
 - preserve resumable context → `handoff` or `resume-from-handoff`
-- summarize readiness → `ramblings-ready-check`
-- clean up and archive finished work → `ramblings-archive`
-
-## Surface taxonomy
-
-- **skill** = capability, context, method, persona, or workflow boundary
-- **agent** = stable role surface with explicit permissions or operational posture
-- **tool** = deterministic operation that an agent should be able to call directly
-- **command** = convenience entrypoint that routes into the right workflow surface
-
-In this repo, skills carry most workflow behavior, agents carry stable role/permission shells, tools carry deterministic mechanics, and commands reduce entry friction.
+- summarize readiness → `ready-check`
+- clean up and archive finished work → `archive`
 
 ## Stable vs evolving
 
@@ -118,12 +103,8 @@ More likely to evolve:
 
 ## Commands provided by the plugin
 
-- `conductor`
 - `office-hours`
 - `start-feature`
-- `plan-ceo-review`
-- `plan-eng-review`
-- `qa-review`
 - `careful`
 - `challenge-me`
 - `grill-me`
@@ -131,19 +112,21 @@ More likely to evolve:
 - `resume-from-handoff`
 - `retro`
 - `investigate`
-- `write-spec`
+- `ready-check`
+- `archive`
+- `write-brief`
 - `write-plan`
 - `start-work`
 
-`start-work` is the main execution entrypoint. It operates against project-root `.ramblings/` artifacts, prefers a YAML checklist as the durable execution-state source of truth, and now has a small deterministic custom-tool surface for mechanical state operations.
+`start-work` is the main execution entrypoint. It operates against project-root `.ramblings/` artifacts, prefers a YAML checklist as the durable execution-state source of truth, and now has a small deterministic custom-tool surface for mechanical state operations. On entry it may archive exactly one simple-path archive-eligible completed work unit, clean it out of the active area, and then resume unfinished work. Broader cleanup, consolidation, or ambiguous archive decisions still belong to the explicit `archive` command.
 
 When those helper tools are called directly, use the repo-prefixed names:
 
 - `ramblings_start_work_resolve`
-- `ramblings_start_work_begin_task`
 - `ramblings_start_work_record_blocked`
-- `ramblings_start_work_record_completion`
 - `ramblings_start_work_rerun_continuation`
+
+Simple checklist begin/complete transitions may be written directly; the retained helpers are for non-trivial start-work decisions and structured blocker recording.
 
 ## Skill taxonomy
 
@@ -153,17 +136,19 @@ Completed execution artifacts may be moved under project-root `.ramblings/archiv
 
 Archive should happen only after the work is no longer an active execution candidate.
 
-There is currently no dedicated archive command; archiving is an explicit operator action.
+`ready-check` is the command-first readiness gate before making a readiness claim.
+
+`archive` is the explicit operator-facing cleanup/consolidation entrypoint.
 
 ## Agent provided by the plugin
 
-- `conductor` — planning-only custom agent for project-root `.ramblings/` artifacts
+- `conductor` / `@conductor` — planning-only custom agent for project-root `.ramblings/` artifacts
 - `reviewer` — shared callable review agent for skill-driven product, engineering, QA, and DevEx review
 
 Use Conductor when you want a planning surface that can write:
 
 - `.ramblings/plans/**`
-- `.ramblings/specs/**`
+- `.ramblings/briefs/**`
 - `.ramblings/checklists/**`
 - `.ramblings/handoffs/**`
 - `.ramblings/debug/**`
@@ -171,10 +156,16 @@ Use Conductor when you want a planning surface that can write:
 
 without entering implementation.
 
-Use Reviewer (`@reviewer`) when you want a stable shared review agent that routes through the selected review skill for persona, skepticism, and recommendation shape.
+Use Reviewer (`@reviewer`) when you want a stable shared review agent for direct single-lens review, with the selected review skill supplying persona, skepticism, and recommendation shape.
+
+Preferred style: ask for the review angle in natural language, for example:
+
+- `@reviewer` — review this plan from the engineering perspective
+- `@reviewer` — review this proposal from the product perspective
+- `@reviewer` — review this change from the QA perspective
 
 Use `challenge-me` when you want structured multi-perspective pressure testing through the shared `Reviewer` surface. When multiple lenses are selected, it should instantiate one independent reviewer lane per lens before synthesis.
 
-Use `grill-me` when you want one-question-at-a-time interrogation to reduce ambiguity before committing to a spec, plan, or implementation direction.
+Use `grill-me` when you want one-question-at-a-time interrogation to reduce ambiguity before committing to a brief, plan, or implementation direction.
 
 See `docs/commands.md` for details.

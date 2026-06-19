@@ -1,13 +1,14 @@
 {
-  "name": "ramblings-skills",
+  "name": "ramblings",
   "version": "0.1.0",
   "private": true,
-  "description": "Ramblings workflow skills and OpenCode command-injection plugin",
+  "description": "Ramblings workflow framework plugin for OpenCode",
   "type": "module",
   "main": "./plugin/ramblings-plugin.ts",
   "exports": "./plugin/ramblings-plugin.ts",
   "scripts": {
-    "validate:start-work": "tsc -p tsconfig.start-work.json --noEmit"
+    "validate:start-work": "bun test plugin/start-work/*.test.ts",
+    "test:start-work": "bun test plugin/start-work/*.test.ts"
   },
   "dependencies": {
     "@opencode-ai/plugin": "^1.17.8",

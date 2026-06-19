@@ -25,7 +25,7 @@ topic: ultrawork
 work_unit: ultrawork-runtime-hardening
 references:
   - .ramblings/plans/...
-  - .ramblings/specs/...
+  - .ramblings/briefs/...
 supersedes: 2026-06-18-ultrawork-status-handoff.md   # optional
 status: active                                       # active | superseded | stale | complete
 ---
@@ -69,7 +69,7 @@ Do not duplicate large source artifacts.
 
 Instead of copying full specs, plans, reviews, or diffs into the handoff, reference them explicitly:
 
-- `.ramblings/specs/...`
+- `.ramblings/briefs/...`
 - `.ramblings/plans/...`
 - `.ramblings/reviews/...`
 - `.ramblings/debug/...`
@@ -92,7 +92,7 @@ Include only what the next session actually needs:
 topic: [broad topic]
 work_unit: [narrower work unit]
 references:
-  - .ramblings/specs/...
+  - .ramblings/briefs/...
   - .ramblings/plans/...
 supersedes: [older handoff filename, optional]
 status: active
@@ -105,7 +105,7 @@ status: active
 ## Current state
 
 ## Read these first
-- `.ramblings/specs/...`
+- `.ramblings/briefs/...`
 - `.ramblings/plans/...`
 
 ## Open questions / blockers

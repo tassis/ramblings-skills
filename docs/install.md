@@ -8,7 +8,7 @@ Add this to `opencode.json` and restart OpenCode:
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "ramblings-skills@git+https://github.com/tassis/ramblings-skills.git"
+    "ramblings@git+https://github.com/tassis/ramblings.git"
   ]
 }
 ```
@@ -21,7 +21,7 @@ If you are developing from a local checkout, use a direct plugin path instead:
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "~/workdir/ramblings-skills/plugin/ramblings-plugin.ts"
+    "~/workdir/ramblings/plugin/ramblings-plugin.ts"
   ]
 }
 ```

@@ -1,17 +1,21 @@
 import {
   assignTaskDelegation,
   clearTaskDelegation,
+  applyContinuationWriteback,
   setActiveTask,
   setDelegationStatus,
+  reconcileDelegatedLaneTerminalResult,
   updateChecklistTask,
   writeChecklistState,
 } from "./checklist"
 import { decideStartWorkContinuation, type StartWorkContinuationInput } from "./continuation"
 import { getNextRunnableTask, resolveStartWorkArtifacts } from "./artifacts"
 import {
+  type StartWorkArtifactResolutionKind,
   type StartWorkChecklistState,
   type StartWorkContinuation,
   type StartWorkDelegationRegistryEntry,
+  type StartWorkRecordTerminalToolMetadata,
   type StartWorkTaskSelection,
 } from "./types"
 
@@ -20,13 +24,26 @@ export interface StartWorkLoopState {
   checklist: StartWorkChecklistState
   taskSelection: StartWorkTaskSelection
   continuation: StartWorkContinuation
+  archiveAction?: {
+    archivePath: string
+    archivedFiles: string[]
+    removedActiveFiles: string[]
+  }
 }
 
-export async function resolveStartWorkLoop(projectRoot: string): Promise<StartWorkLoopState | StartWorkContinuation> {
+export interface StartWorkLoopContinuationState {
+  artifactResolutionKind: Exclude<StartWorkArtifactResolutionKind, "resolved">
+  continuation: StartWorkContinuation
+}
+
+export async function resolveStartWorkLoop(projectRoot: string): Promise<StartWorkLoopState | StartWorkLoopContinuationState | StartWorkContinuation> {
   const artifactResolution = await resolveStartWorkArtifacts(projectRoot)
 
   if (artifactResolution.kind !== "resolved") {
-    return decideStartWorkContinuation({ artifactResolution })
+    return {
+      artifactResolutionKind: artifactResolution.kind,
+      continuation: decideStartWorkContinuation({ artifactResolution }),
+    }
   }
 
   if (!artifactResolution.checklist || !artifactResolution.candidate.checklistPath) {
@@ -50,23 +67,8 @@ export async function resolveStartWorkLoop(projectRoot: string): Promise<StartWo
     checklist: artifactResolution.checklist,
     taskSelection,
     continuation,
+    archiveAction: artifactResolution.archiveAction,
   }
-}
-
-export function beginTaskExecution(
-  checklist: StartWorkChecklistState,
-  taskId: string,
-  note: string,
-): StartWorkChecklistState {
-  return setActiveTask(
-    updateChecklistTask(checklist, taskId, {
-      status: "in_progress",
-      next_action: null,
-      last_update: note,
-    }),
-    taskId,
-    "running",
-  )
 }
 
 export function dispatchDelegatedLane(
@@ -90,7 +92,55 @@ export function recordDelegatedLaneTerminalResult(
   taskId: string,
   note: string,
 ): StartWorkChecklistState {
-  return setActiveTask(
+  return recordDelegatedLaneTerminalOutcome(checklist, taskId, note).checklist
+}
+
+export function recordDelegatedLaneTerminalOutcome(
+  checklist: StartWorkChecklistState,
+  taskId: string,
+  note: string,
+):
+  | { kind: "recorded"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string }
+  | { kind: "already-handled"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string }
+  | { kind: "mismatch"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string }
+  | { kind: "error"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string } {
+  const task = checklist.tasks.find((candidate) => candidate.id === taskId)
+  if (!task) {
+    return terminalOutcome(checklist, taskId, "mismatch", `Task ${taskId} was not found in the checklist.`, null)
+  }
+
+  if (!checklist.delegations) {
+    return terminalOutcome(checklist, taskId, "error", `Checklist ${taskId} has no delegation registry for terminal reconciliation.`, null)
+  }
+
+  const registryEntry = checklist.delegations.find((delegation) => delegation.task_ref === taskId)
+  const delegatedLaneTaskId = task.delegated_to?.task_id ?? null
+
+  if (!registryEntry) {
+    return terminalOutcome(checklist, taskId, "mismatch", `Task ${taskId} has no registry entry for its delegated lane.`, null)
+  }
+
+  if (registryEntry.task_ref !== taskId) {
+    return terminalOutcome(checklist, taskId, "mismatch", `Task ${taskId} is mapped to a different registry lane.`, registryEntry.status)
+  }
+
+  if (delegatedLaneTaskId !== null && delegatedLaneTaskId !== registryEntry.task_id) {
+    return terminalOutcome(checklist, taskId, "mismatch", `Task ${taskId} is mapped to a stale delegated lane.`, registryEntry.status)
+  }
+
+  if (task.delegated_to === null && registryEntry.status === "terminal_unreconciled") {
+    return terminalOutcome(checklist, taskId, "already-handled", `Terminal result for ${taskId} was already recorded.`, registryEntry.status)
+  }
+
+  if (registryEntry.status !== "running") {
+    return terminalOutcome(checklist, taskId, "mismatch", `Delegation for ${taskId} must be running before recording terminal output.`, registryEntry.status)
+  }
+
+  if (delegatedLaneTaskId !== registryEntry.task_id) {
+    return terminalOutcome(checklist, taskId, "mismatch", `Task ${taskId} does not match delegated lane task ${registryEntry.task_id}.`, registryEntry.status)
+  }
+
+  const updatedChecklist = setActiveTask(
     clearTaskDelegation(
       setDelegationStatus(checklist, taskId, "terminal_unreconciled"),
       taskId,
@@ -103,30 +153,32 @@ export function recordDelegatedLaneTerminalResult(
     taskId,
     "running",
   )
+
+  return terminalOutcome(updatedChecklist, taskId, "recorded", `Recorded terminal result for ${taskId}.`, "terminal_unreconciled")
 }
 
-export function recordTaskCompletion(
+function terminalOutcome(
   checklist: StartWorkChecklistState,
   taskId: string,
-  note: string,
-): StartWorkChecklistState {
-  return setActiveTask(
-    clearTaskDelegation(
-      updateChecklistTask(checklist, taskId, {
-        status: "complete",
-        next_action: null,
-        last_update: note,
-      }),
-      taskId,
-      {
-        registryStatus: "terminal_reconciled",
-        waiting_on: null,
-        last_update: note,
-      },
-    ),
-    null,
-    "running",
-  )
+  kind: "recorded" | "already-handled" | "mismatch" | "error",
+  message: string,
+  delegationStatus: string | null,
+):
+  | { kind: "recorded"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string }
+  | { kind: "already-handled"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string }
+  | { kind: "mismatch"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string }
+  | { kind: "error"; checklist: StartWorkChecklistState; metadata: StartWorkRecordTerminalToolMetadata; message: string } {
+  const metadata: StartWorkRecordTerminalToolMetadata = {
+    ok: kind === "recorded" || kind === "already-handled",
+    status: kind,
+    taskId,
+    checklistPath: "",
+    executionState: checklist.execution_state,
+    delegationStatus: (delegationStatus as StartWorkRecordTerminalToolMetadata["delegationStatus"]) ?? null,
+    message,
+  }
+
+  return { kind, checklist, metadata, message }
 }
 
 export function recordBlockedTask(
@@ -184,4 +236,28 @@ export function rerunContinuation(checklist: StartWorkChecklistState): StartWork
   const taskSelection = getNextRunnableTask(checklist)
   const input: StartWorkContinuationInput = { checklist, taskSelection }
   return decideStartWorkContinuation(input)
+}
+
+export function reconcileAndRerunContinuation(
+  checklist: StartWorkChecklistState,
+  taskId: string,
+  note: string,
+): { checklist: StartWorkChecklistState; continuation: StartWorkContinuation } {
+  const reconciled = reconcileDelegatedLaneTerminalResult(checklist, taskId, note)
+  const continuation = rerunContinuation(reconciled)
+
+  switch (continuation.kind) {
+    case "waiting":
+    case "done":
+    case "replanning":
+    case "ask-user":
+      return {
+        checklist: applyContinuationWriteback(reconciled, continuation as any),
+        continuation,
+      }
+    case "continue":
+      return { checklist: reconciled, continuation }
+  }
+
+  return { checklist: reconciled, continuation }
 }

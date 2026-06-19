@@ -1,10 +1,14 @@
 # Architecture
 
+This page explains the internal structure behind the ramblings plugin.
+
+Read this after README if you want the implementation model, surface boundaries, or plugin/runtime contract details.
+
 ## Layers
 
 ### `skills/`
 
-Contains the actual `ramblings-*` skills. These define workflow guidance such as brainstorming, spec writing, ready checks, debugging, review, and challenge workflows.
+Contains the actual `ramblings-*` skills. These define workflow guidance such as brainstorming, brief writing, ready checks, debugging, review, and challenge workflows.
 
 See `docs/skills.md` for the current taxonomy, routing rules, and overlap guide.
 
@@ -17,7 +21,7 @@ Contains an OpenCode plugin that registers this repo's `skills/` path, injects o
 The intended framework lifecycle is:
 
 1. discussion / shaping
-2. spec writing
+2. brief writing / converged discussion capture
 3. planning
 4. execution
 5. review
@@ -35,8 +39,10 @@ These are not separate products. They are different phases of the same workflow 
 - Commands are lightweight prompt shortcuts that encourage the right `ramblings-*` skill usage.
 - `conductor` is the repo-owned planning surface; native `@plan` behavior remains outside this repo's contract.
 - `Reviewer` / `reviewer` is the shared callable review agent; reviewer persona still comes primarily from the selected review skill.
-- `start-work` has a small tool-backed mechanical surface for deterministic state operations, but it is not a full runtime scheduler.
-- The plugin-exposed helper tools should use repo-prefixed names (`ramblings_start_work_*`) to avoid host-runtime collisions with unprefixed `start_work_*` names.
+- `start-work` has a small tool-backed mechanical surface for deterministic state operations, supports post-completion / half-automatic re-entry, but it is not a full runtime scheduler.
+- `/start-work` may perform a narrow entry-time archive evaluation for one clearly eligible completed work unit, package it into `.ramblings/archive/`, clean the active-area plan/checklist copies, and then resume unfinished work.
+- `ready-check` and `archive` are command-first lifecycle entrypoints layered on top of the existing skills.
+- The plugin-exposed helper tools use repo-prefixed names (`ramblings_start_work_*`) as the supported runtime surface.
 
 ## Surface taxonomy
 
@@ -68,9 +74,10 @@ More likely to evolve internally:
 This repo's command hardening is currently contract-driven, not runtime-engine-driven.
 
 - `handoff`, `resume-from-handoff`, and `start-work` can define artifact rules, selection ladders, and stop conditions in their prompt surfaces.
-- `start-work` is now gaining helper-backed control logic under `plugin/start-work/` plus top-level plugin custom tools for resolution and checklist state transitions.
-- These command surfaces still do **not** provide a full standalone runtime scheduler or executor.
-- Determinism currently comes from clearer artifact contracts plus explicit helper-backed control rules and tool-wrapped state operations, not from a deeper runtime engine.
+- `start-work` is now gaining helper-backed control logic under `plugin/start-work/` plus top-level plugin custom tools for artifact resolution, structured blocker recording, and continuation decisions, while simple checklist begin/complete transitions may still be written directly.
+- The supported runtime path is currently **post-completion / half-automatic re-entry**: completion can become observable, checklist state can be reconciled, and continuation can be rerun from persisted state.
+- These command surfaces still do **not** provide a full standalone runtime scheduler or executor, and they do **not** claim a first-class pre-stop auto-reenter callback.
+- Determinism currently comes from clearer artifact contracts plus explicit helper-backed control rules and a small set of decision/validation helpers, not from a deeper runtime engine.
 
 ## Start-work execution boundary
 
@@ -78,10 +85,14 @@ The intended `start-work` model is:
 
 - route `/start-work` to a dedicated execution orchestrator;
 - do **not** reuse the planning-only `conductor` for execution;
+- prefer subagent-first execution for bounded, specialist-shaped, independently finishable work;
+- keep orchestrator-direct work narrow: control-plane operations, terminal reconciliation, verification, and very small synchronous checks;
 - keep first-iteration execution single-task, single-lane, and sequential by default;
 - treat YAML checklists under `.ramblings/checklists/` as the durable execution-state source of truth.
 
 If the host/plugin environment cannot yet hard-bind `/start-work` to a dedicated execution agent, the command surface should still behave as though that execution-orchestrator contract exists.
+
+If no reliable automatic re-entry hook is available at completion time, the fallback remains explicit `/start-work` resume or equivalent session continuation from the persisted checklist state.
 
 Consider a deeper runtime/helper implementation later if:
 

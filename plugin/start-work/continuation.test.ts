@@ -1,0 +1,48 @@
+import { test } from "bun:test"
+import * as assert from "node:assert/strict"
+import { decideStartWorkContinuation } from "./continuation"
+
+test("decideStartWorkContinuation returns continue for a runnable task", () => {
+  const continuation = decideStartWorkContinuation({
+    checklist: {
+      plan: ".ramblings/plans/2026-06-19-topic.md",
+      active_task: null,
+      execution_state: "running",
+      tasks: [],
+      delegations: [],
+    },
+    taskSelection: {
+      kind: "task",
+      task: {
+        id: "task-1",
+        title: "Implement",
+        status: "not_started",
+        delegated_to: null,
+        waiting_on: null,
+        blocked_by: null,
+        unblock_when: null,
+        next_action: null,
+        last_update: null,
+      },
+    },
+  })
+
+  assert.equal(continuation.kind, "continue")
+  assert.equal(continuation.activeTaskId, "task-1")
+})
+
+test("decideStartWorkContinuation preserves ask-user note from artifact resolution", () => {
+  const continuation = decideStartWorkContinuation({
+    artifactResolution: {
+      kind: "ask-user",
+      reason: "Multiple unfinished plans remain.",
+      candidates: [
+        { planPath: ".ramblings/plans/a.md", checklistPath: null, handoffPath: null, readyCheckPath: null },
+        { planPath: ".ramblings/plans/b.md", checklistPath: null, handoffPath: null, readyCheckPath: null },
+      ],
+    },
+  })
+
+  assert.equal(continuation.kind, "ask-user")
+  assert.match(continuation.note ?? "", /a\.md.*b\.md/)
+})

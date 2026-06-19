@@ -6,7 +6,7 @@ import {
 } from "../start-work/continuation"
 
 export const startWork = {
-  description: "Start or resume execution from the active unfinished plan",
+  description: "Start or resume execution from the active unfinished plan, after evaluating simple-path archive cleanup at entry",
   template: `Use ramblings-implementing-plans. Enter execution mode for the current project's root .ramblings/ artifacts.
 
 ${schedulerReminder}
@@ -19,6 +19,9 @@ Treat this as /start-work semantics:
 - start or resume; do not assume this always starts from scratch
 - locate the project-root .ramblings/ directory only
 - identify the active unfinished YAML checklist/plan safely before editing
+- first evaluate completed work units for simple-path archive cleanup before selecting unfinished work
+- if exactly one completed work unit is archive-eligible, perform narrow simple-path archive packaging and active-area cleanup before continuing
+- if completed work is ambiguous, missing readiness evidence, or conflicts on source of truth, ask the user or defer rather than auto-archiving
 - ignore .ramblings/archive/** during active plan/checklist discovery; archived artifacts are historical records, not runnable candidates
 - prefer a separate YAML checklist/execution-state artifact over inline plan status
 - treat handoffs as hints, not stronger than an active checklist
@@ -35,7 +38,10 @@ Execution contract:
 - if an active unfinished plan exists and a runnable task is available, continue; do not idle
 - work task-by-task in plan order unless the plan explicitly allows another independent runnable task
 - plan lanes/dependencies before dispatching specialist work
+- prefer subagent-first execution for bounded, specialist-shaped, independently finishable work
 - dispatch only independent work
+- keep orchestrator-direct work narrow: control-plane, terminal reconciliation, verification, very small synchronous checks, or no-viable-delegation cases
+- do not turn orchestrator self-parallelism into a substitute for ordinary discovery, research, review, or implementation delegation
 - do not poll running jobs or use partial running output as completion evidence
 - reconcile terminal results before verification
 - final verification is orchestrator-owned after reconciliation
@@ -64,9 +70,10 @@ State-writeback contract:
 Tool contract:
 - when using the plugin's deterministic helper tools, use the repo-prefixed names:
   - \`ramblings_start_work_resolve\`
-  - \`ramblings_start_work_begin_task\`
+  - \`ramblings_start_work_record_terminal\`
+  - \`ramblings_start_work_reconcile_and_rerun\`
   - \`ramblings_start_work_record_blocked\`
-  - \`ramblings_start_work_record_completion\`
   - \`ramblings_start_work_rerun_continuation\`
-- do not assume unprefixed \`start_work_*\` tool names are safe in the host runtime`
+- simple begin/complete checklist state transitions may still be written directly when no delegation, terminal-result handling, or continuation mechanics are involved
+- use the helper tools for artifact resolution, terminal-result recording, terminal reconciliation + rerun, blocker recording, and continuation decisions`
 }

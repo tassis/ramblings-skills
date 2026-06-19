@@ -53,7 +53,7 @@ Do not rely on the handoff note alone.
 
 Read the referenced artifacts first, such as:
 
-- `.ramblings/specs/...`
+- `.ramblings/briefs/...`
 - `.ramblings/plans/...`
 - `.ramblings/reviews/...`
 - `.ramblings/debug/...`

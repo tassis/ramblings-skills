@@ -5,7 +5,7 @@ description: Brainstorming, design discussion, requirement discovery, architectu
 
 # Ramblings Brainstorming
 
-Use this skill before formal spec writing when the task still needs exploration, clarification, or trade-off discussion.
+Use this skill before brief writing when the task still needs exploration, clarification, or trade-off discussion.
 
 This is the right skill when the user is saying things like:
 
@@ -19,7 +19,7 @@ This is the right skill when the user is saying things like:
 
 Turn rough intent into a clearer direction that is ready for one of these next steps:
 
-- write a spec with `ramblings-spec-writing`
+- write a brief with `ramblings-brief-writing`
 - write an implementation plan with `ramblings-writing-plans`
 - stop at discussion only if the user is not ready to proceed
 
@@ -28,7 +28,7 @@ Turn rough intent into a clearer direction that is ready for one of these next s
 If the discussion should be written down, save notes or a draft under:
 
 ```text
-.ramblings/specs/YYYY-MM-DD-<topic>.md
+.ramblings/briefs/YYYY-MM-DD-<topic>.md
 ```
 
 Do not force file output for every short discussion. Write it down when the discussion has enough substance that future reference matters.
@@ -136,6 +136,6 @@ Cover:
 
 ## When to hand off
 
-When the discussion has converged enough that a document should exist, move to `ramblings-spec-writing`.
+When the discussion has converged enough that a document should exist, move to `ramblings-brief-writing`.
 
 When the spec is already clear enough to execute, move to `ramblings-writing-plans`.

@@ -1,6 +1,6 @@
 import path from "path"
 import { fileURLToPath } from "url"
-import { conductor } from "./agents/conductor"
+import { conductor as newConductor } from "./agents/conductor"
 import { reviewer } from "./agents/review"
 import { ramblingsCommands } from "./commands/index"
 import { startWorkTools } from "./tools/start-work"
@@ -23,7 +23,7 @@ export default async function ramblingsPlugin() {
       config.agent = config.agent || {}
 
       if (!("conductor" in config.agent)) {
-        config.agent.conductor = conductor
+        config.agent.conductor = newConductor()
       }
 
       if (!("reviewer" in config.agent)) {

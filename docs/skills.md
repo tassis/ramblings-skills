@@ -1,19 +1,26 @@
 # Skills Guide
 
-This page is the quick routing guide for the repo's workflow skills.
+This page is the routing guide for ramblings skills.
 
-- Use the tables below to choose the right skill quickly.
+- Use it when you want to choose the right workflow skill for the job.
 - Use the linked `SKILL.md` files for full guidance and output structure.
-- Command-first entrypoints such as `office-hours`, `handoff`, `resume-from-handoff`, and `start-work` are documented in `docs/commands.md`.
+- For command-first entrypoints such as `office-hours`, `write-brief`, `write-plan`, `start-work`, `ready-check`, `archive`, `handoff`, and `resume-from-handoff`, see [`docs/commands.md`](commands.md).
 
 Quick routing:
 
-- discuss or shape direction → `ramblings-brainstorming`
-- write the direction down → `ramblings-spec-writing`
-- turn it into execution tasks → `ramblings-writing-plans`
-- execute an existing plan → `ramblings-implementing-plans` / `start-work`
-- challenge from one or more review perspectives → review skills / `ramblings-challenge-me`
-- archive and clean finished work → `ramblings-archive`
+- discuss or shape direction → `office-hours`
+- write the converged discussion down → `write-brief`
+- turn it into execution tasks → `write-plan`
+- execute an existing plan → `start-work`
+- summarize readiness evidence → `ready-check`
+- challenge from one or more review perspectives → `challenge-me`
+- archive and clean finished work → `archive`
+
+Use the skill references below when you need deeper routing detail or want to invoke a skill directly.
+
+## Reference Policies
+
+The sections below capture durable artifact/reference rules that multiple workflow phases rely on.
 
 ## Archive Policy
 
@@ -40,7 +47,7 @@ Rules:
 - Archive only after the work is no longer executable: checklist complete, no `in_progress`, no `blocked`, no remaining active execution work.
 - If a `ready-check` exists, archive is safest when its state is `ready`; if no `ready-check` exists, a conservative fallback may archive only when the checklist and handoff state still show no remaining active work.
 - After archival, active-area copies of the same plan/checklist should not remain in `.ramblings/plans/` or `.ramblings/checklists/`.
-- There is currently no dedicated archive command; archive is a manual operator workflow until experience proves a command is necessary.
+- `archive` is available as a dedicated command entrypoint for explicit cleanup/consolidation work; the command should still remain conservative and stop on ambiguity.
 
 ## Handoff Artifact Policy
 
@@ -54,7 +61,7 @@ topic: ultrawork
 work_unit: ultrawork-runtime-hardening
 references:
   - .ramblings/plans/...
-  - .ramblings/specs/...
+  - .ramblings/briefs/...
 supersedes: 2026-06-18-ultrawork-status-handoff.md   # optional
 status: active                                       # active | superseded | stale | complete
 ---
@@ -75,7 +82,7 @@ Resume selection ladder:
 3. Exclude handoffs marked `superseded`, `stale`, or clearly invalidated by newer source artifacts.
 4. Prefer a handoff that explicitly `supersedes` another candidate.
 5. Among remaining candidates, prefer the newest dated handoff.
-6. Verify against referenced plans/specs/checklists before trusting the handoff.
+6. Verify against referenced plans/briefs/checklists before trusting the handoff.
 7. If multiple candidates remain equally plausible after verification, ask the user rather than guessing.
 
 Migration guidance:
@@ -125,17 +132,17 @@ After verifying references, resume should prefer the newer handoff that explicit
   work_unit: ultrawork-runtime-hardening
 ```
 
-If neither handoff supersedes the other and the current plan/checklist/spec state does not clearly disambiguate them, ask the user rather than guessing.
+If neither handoff supersedes the other and the current plan/checklist/brief state does not clearly disambiguate them, ask the user rather than guessing.
 
 ## Phase Skills
 
 | Skill | Purpose | Use when | Not for |
 |---|---|---|---|
-| [`ramblings-triage`](../skills/ramblings-triage/SKILL.md) | Classify a messy request and choose the next route. | The request is ambiguous, incomplete, or could map to multiple workflows. | Clear bugfixes, explicit spec writing, explicit planning, explicit review, or explicit handoff/resume requests. |
+| [`ramblings-triage`](../skills/ramblings-triage/SKILL.md) | Classify a messy request and choose the next route. | The request is ambiguous, incomplete, or could map to multiple workflows. | Clear bugfixes, explicit brief writing, explicit planning, explicit review, or explicit handoff/resume requests. |
 | [`ramblings-investigation`](../skills/ramblings-investigation/SKILL.md) | Establish current-state facts before deciding the next step. | You need to trace how something works or understand existing behavior first. | Confirmed bugfix execution, casual brainstorming, or final verification. |
-| [`ramblings-brainstorming`](../skills/ramblings-brainstorming/SKILL.md) | Collaborative discussion and decision support. | You want to compare options, see examples, or talk through tradeoffs before committing. | Formal spec capture or production implementation. |
-| [`ramblings-prototype`](../skills/ramblings-prototype/SKILL.md) | Run or plan a focused feasibility/design spike. | There is a concrete question that a small experiment can answer. | Open-ended exploration, formal spec writing, or production implementation. |
-| [`ramblings-spec-writing`](../skills/ramblings-spec-writing/SKILL.md) | Turn a converged direction into a reviewable artifact. | You want a spec, proposal, design note, or requirements artifact before implementation. | Casual exploration before conclusions have formed. |
+| [`ramblings-brainstorming`](../skills/ramblings-brainstorming/SKILL.md) | Collaborative discussion and decision support. | You want to compare options, see examples, or talk through tradeoffs before committing. | Formal brief capture or production implementation. |
+| [`ramblings-prototype`](../skills/ramblings-prototype/SKILL.md) | Run or plan a focused feasibility/design spike. | There is a concrete question that a small experiment can answer. | Open-ended exploration, formal brief writing, or production implementation. |
+| [`ramblings-brief-writing`](../skills/ramblings-brief-writing/SKILL.md) | Turn converged discussion into a reviewable brief. | You want a brief, proposal, design note, or requirements artifact before implementation. | Casual exploration before conclusions have formed. |
 | [`ramblings-writing-plans`](../skills/ramblings-writing-plans/SKILL.md) | Turn an approved direction into an execution-ready implementation plan. | The work is multi-step, risky, or spans multiple files and should be guided by a plan. | Tiny one-file tweaks or work that still needs requirement discovery first. |
 | [`ramblings-implementing-plans`](../skills/ramblings-implementing-plans/SKILL.md) | Execute an existing plan safely, step by step. | A real plan already exists and the next job is execution with verification and state writeback. | First-time planning, open-ended design, or requirement discovery. |
 | [`ramblings-systematic-debugging`](../skills/ramblings-systematic-debugging/SKILL.md) | Root-cause debugging for confirmed bugs or failing behavior. | A bug, regression, or failing test needs diagnosis and a focused fix. | Pure current-state understanding when you are not ready to call it a bug yet. |
@@ -153,7 +160,7 @@ If neither handoff supersedes the other and the current plan/checklist/spec stat
 | [`ramblings-qa-review`](../skills/ramblings-qa-review/SKILL.md) | QA reviewer contract focused on likely breakage, verification gaps, and proof quality. | The main question is what can break and what is still unverified. | Product-value critique or implementation execution. |
 | [`ramblings-devex-review`](../skills/ramblings-devex-review/SKILL.md) | DevEx reviewer contract focused on maintainer/operator pain, setup friction, and workflow clarity. | The main question is setup pain, maintainability, CLI clarity, or debugging friction. | End-user UX review or generic architecture review. |
 
-The repo also exposes a shared `Reviewer` agent surface (`@reviewer`) for review workflows. It is a stable carrier only; the selected review skill remains the primary source of reviewer persona, skepticism, and verdict shape.
+The repo also exposes a shared `Reviewer` agent surface (`@reviewer`) for review workflows. It is the primary direct entrypoint for single-lens review; the selected review skill remains the primary source of reviewer persona, skepticism, and verdict shape.
 
 ## Review Orchestration and Review Workflow
 
@@ -164,17 +171,17 @@ The repo also exposes a shared `Reviewer` agent surface (`@reviewer`) for review
 | [`ramblings-requesting-code-review`](../skills/ramblings-requesting-code-review/SKILL.md) | Prepare a focused review request after implementation exists. | The next step is reviewer attention and you want the review context organized. | Handling existing reviewer comments. |
 | [`ramblings-receiving-code-review`](../skills/ramblings-receiving-code-review/SKILL.md) | Evaluate and respond to incoming review feedback. | Reviewer comments already exist and need technical handling. | Requesting a new review or brainstorming design options from scratch. |
 
-The shared `Reviewer` surface (`@reviewer`) should be instantiated once per selected review lens when a panel is needed. For `ramblings-challenge-me`, reviewer lane count should match lens count, each lane should use its own session/context, and final synthesis/arbitration should stay in `ramblings-challenge-me` or a broader orchestration layer. This still does **not** imply separate reviewer-specific agent definitions by default.
+The shared `Reviewer` surface (`@reviewer`) should be instantiated once per selected review lens when a panel is needed. For `ramblings-challenge-me`, reviewer lane count should match lens count, each lane should use its own session/context, and final synthesis/arbitration should stay in `ramblings-challenge-me` or a broader orchestration layer. Use `@reviewer` for single-lens review and `challenge-me` for disagreement-preserving multi-lens panels. This still does **not** imply separate reviewer-specific agent definitions by default.
 
 ## Command-First / Protocol / Modifier Guidance
 
 | Skill or Command | Purpose | Use when | Not for |
 |---|---|---|---|
-| `office-hours` | Open-ended discussion, scope discovery, and shaping. | You want an early conversational entrypoint before deciding whether to spec or plan. | Committing to a full execution lifecycle by itself. |
-| `start-feature` | Command-first full lifecycle entrypoint for substantial work. | You want a feature, subsystem, or project to move from discussion through spec, plan, execution, and ready-check. | Narrow single-phase work such as only brainstorming, only planning, or only debugging. |
-| [`ramblings-workflow`](../skills/ramblings-workflow/SKILL.md) | Umbrella lifecycle guidance for substantial work. | You want an end-to-end path from discussion through spec, planning, execution, and verification. | Narrow single-phase work such as only debugging, only spec writing, or only final verification. |
+| `office-hours` | Open-ended discussion, scope discovery, and shaping. | You want an early conversational entrypoint before deciding whether to write a brief or a plan. | Committing to a full execution lifecycle by itself. |
+| `start-feature` | Command-first full lifecycle entrypoint for substantial work. | You want a feature, subsystem, or project to move from discussion through brief, plan, execution, and ready-check. | Narrow single-phase work such as only brainstorming, only planning, or only debugging. |
+| `ready-check` | Command-first readiness gate. | You want an evidence-based answer about whether work is ready for review, validation, completion, or archive. | Early validation planning before implementation exists. |
+| `archive` | Command-first cleanup and archive entrypoint. | You want explicit operator-driven archive cleanup or consolidation once work is no longer an active execution candidate. | Ordinary unfinished execution work. |
 | [`ramblings-testing-strategy`](../skills/ramblings-testing-strategy/SKILL.md) | Choose the best practical validation approach before implementation. | The testing strategy itself is unclear, risky, or explicitly requested. | Final verification evidence after implementation. |
-| [`ramblings-careful-mode`](../skills/ramblings-careful-mode/SKILL.md) | Conservative high-risk posture guidance. | The task is dangerous enough that caution should override speed. | Ordinary low-risk planning or execution by default. |
 | `careful` | Explicit command-first high-risk mode hint. | You already know the task is risky before evaluation starts. | Generic planning that has not shown risk signals. |
 | `handoff` / `resume-from-handoff` | Explicit protocol entrypoints for session transfer. | You clearly want to preserve or restore session context. | General workflow routing when no transfer is involved. |
 | `start-work` | Command-first entrypoint for plan execution. | An active unfinished plan exists and should be resumed or continued. | Requirement discovery or plan writing. |
@@ -185,13 +192,13 @@ For delegated Ultrawork execution, prefer a YAML checklist under `.ramblings/che
 
 | Situation | Prefer | Instead of | Why |
 |---|---|---|---|
-| You want to talk through options and decide together. | `ramblings-brainstorming` | `ramblings-spec-writing` | The work is still exploratory rather than converged. |
-| You want to write down the chosen direction as an artifact. | `ramblings-spec-writing` | `ramblings-brainstorming` | The work has converged enough to capture. |
+| You want to talk through options and decide together. | `ramblings-brainstorming` | `ramblings-brief-writing` | The work is still exploratory rather than converged. |
+| You want to write down the chosen direction as a brief. | `ramblings-brief-writing` | `ramblings-brainstorming` | The work has converged enough to capture. |
 | You need to understand current behavior before deciding what to change. | `ramblings-investigation` | `ramblings-systematic-debugging` | The job is fact-finding, not confirmed bugfix execution yet. |
 | You already have a bug or failing behavior to fix. | `ramblings-systematic-debugging` | `ramblings-investigation` | The task needs root-cause debugging and a safe fix. |
 | You want multiple review perspectives. | `ramblings-challenge-me` | A single review lens | This is a review-panel problem: preserve per-reviewer stance before synthesis. |
 | You want one question at a time after the assistant reads your doc. | `ramblings-grill-me` | `ramblings-challenge-me` | The interaction style matters more than the number of concerns. |
-| You need to know whether the work is ready for review, validation, or completion. | `ramblings-ready-check` | `ramblings-handoff` | This is a readiness/evidence question, not just context transfer. |
+| You need to know whether the work is ready for review, validation, or completion. | `ready-check` | `handoff` | This is a readiness/evidence question, not just context transfer. |
 | You only need to transfer current state to a future session. | `ramblings-handoff` | `ramblings-ready-check` | A handoff does not require a readiness claim unless one is asserted. |
 
 ## Renamed / Consolidated Skills (Planned Cleanup)
@@ -200,16 +207,14 @@ For delegated Ultrawork execution, prefer a YAML checklist under `.ramblings/che
 |---|---|---|
 | `ramblings-challenge-session` | `ramblings-challenge-me` | Renamed to better match user intent. |
 | `ramblings-verification` + `ramblings-finish-handoff` | `ramblings-ready-check` | Merged into a single readiness gate. |
-| `ramblings-execution-strategy` | `ramblings-implementing-plans` | Planned consolidation of execution-time orchestration into plan execution. |
-| `ramblings-careful-mode` | `careful` + embedded workflow guidance | Planned repositioning away from normal standalone trigger use. |
-| `ramblings-workflow` | `start-feature` + backing guidance | Planned shift to a command-first umbrella entrypoint. |
+| `ramblings-execution-strategy` | `ramblings-implementing-plans` | Consolidated: execution-time orchestration guidance now lives inside `ramblings-implementing-plans`. |
 
 ## Trigger Examples
 
 | Example prompt | Prefer | Why |
 |---|---|---|
 | “Help me design this feature.” | `ramblings-brainstorming` | The user wants collaborative exploration before committing to an artifact. |
-| “Write a spec for this.” | `ramblings-spec-writing` | The user wants a durable design artifact. |
+| “Write a brief for this.” | `ramblings-brief-writing` | The user wants a durable brief artifact. |
 | “Trace how this command works.” | `ramblings-investigation` | The job is current-state understanding before deciding what to do next. |
 | “Tests are failing after this change.” | `ramblings-systematic-debugging` | The problem is already a confirmed failing behavior that needs root-cause debugging. |
 | “How should we test this change?” | `ramblings-testing-strategy` | The testing/validation approach itself is the question. |
@@ -217,5 +222,5 @@ For delegated Ultrawork execution, prefer a YAML checklist under `.ramblings/che
 | “Challenge this plan from multiple angles.” | `ramblings-challenge-me` | The user wants a structured review panel, not just one reviewer or a flattened summary. |
 | “Grill this plan and ask hard questions one by one.” | `ramblings-grill-me` | The user wants sequential interrogation, not panel synthesis. |
 | “Find edge cases I’m missing.” | `ramblings-qa-review` | The dominant concern is failure modes and verification gaps. |
-| “Read this spec and ask me one question at a time.” | `ramblings-grill-me` | The interaction style is document-grounded one-question-at-a-time pressure testing. |
+| “Read this brief and ask me one question at a time.” | `ramblings-grill-me` | The interaction style is document-grounded one-question-at-a-time pressure testing. |
 | “I need to leave this for my next session.” | `ramblings-handoff` | The goal is future-session context transfer, not readiness judgment. |

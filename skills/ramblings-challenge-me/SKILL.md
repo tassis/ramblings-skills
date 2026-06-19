@@ -143,5 +143,5 @@ Use `ramblings-devex-review` when the question is:
 - preserve clear reviewer identity before synthesis;
 - be direct and useful, not theatrical;
 - when one reviewer would block while another would proceed, name the conflict explicitly instead of smoothing it over;
-- if the review substantially changes the direction, update `.ramblings/specs/` or `.ramblings/plans/`.
+- if the review substantially changes the direction, update `.ramblings/briefs/` or `.ramblings/plans/`.
 - if the user wants one-question-at-a-time pressure questioning instead of a synthesized critique, use `ramblings-grill-me` instead.

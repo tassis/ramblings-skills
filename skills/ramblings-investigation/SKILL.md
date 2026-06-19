@@ -41,7 +41,7 @@ Write notes only when the investigation is non-trivial, should be resumable, or 
 - Neutral current-state, architecture, workflow, or system-understanding notes may go under:
 
 ```text
-.ramblings/specs/YYYY-MM-DD-<topic>-current-state.md
+.ramblings/briefs/YYYY-MM-DD-<topic>-current-state.md
 ```
 
 ## Investigation flow
@@ -76,7 +76,7 @@ Write notes only when the investigation is non-trivial, should be resumable, or 
 - do not jump into fixing before the facts are established;
 - prefer concrete paths and observations over vague summaries;
 - if the result reveals a true bug hunt, switch to `ramblings-systematic-debugging`;
-- if the result reveals a stable design direction, switch to `ramblings-spec-writing` or `ramblings-writing-plans` as appropriate;
+- if the result reveals a stable design direction, switch to `ramblings-brief-writing` or `ramblings-writing-plans` as appropriate;
 - if the result is enough to answer the user's question directly, answer directly instead of forcing another workflow.
 
 ## Route outcomes
@@ -85,7 +85,7 @@ After the investigation, choose one of these outcomes explicitly:
 
 1. answer only;
 2. switch to `ramblings-systematic-debugging`;
-3. switch to `ramblings-spec-writing`;
+3. switch to `ramblings-brief-writing`;
 4. switch to `ramblings-writing-plans`;
 5. continue to implementation if user intent and current agent mode allow;
 6. ask the user if intent or risk is still unclear.

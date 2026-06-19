@@ -82,7 +82,7 @@ Stop grilling when:
 
 At that point, suggest the next skill if appropriate, such as:
 
-- `ramblings-spec-writing`
+- `ramblings-brief-writing`
 - `ramblings-writing-plans`
 - `ramblings-product-review`
 - `ramblings-engineering-review`

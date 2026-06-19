@@ -1,35 +1,31 @@
+import { archive } from "./archive"
 import { careful } from "./careful"
 import { challengeMe } from "./challenge-me"
-import { conductorCommand } from "./conductor"
 import { grillMe } from "./grill-me"
 import { handoff } from "./handoff"
 import { investigate } from "./investigate"
 import { officeHours } from "./office-hours"
-import { planCeoReview } from "./plan-ceo-review"
-import { planEngReview } from "./plan-eng-review"
-import { qaReview } from "./qa-review"
+import { readyCheck } from "./ready-check"
 import { resumeFromHandoff } from "./resume-from-handoff"
 import { retro } from "./retro"
 import { startFeature } from "./start-feature"
 import { startWork } from "./start-work"
 import { writePlan } from "./write-plan"
-import { writeSpec } from "./write-spec"
+import { writeBrief } from "./write-brief"
 
 export const ramblingsCommands = {
   "careful": careful,
+  "archive": archive,
   "challenge-me": challengeMe,
-  "conductor": conductorCommand,
   "grill-me": grillMe,
   "handoff": handoff,
   "investigate": investigate,
   "office-hours": officeHours,
-  "plan-ceo-review": planCeoReview,
-  "plan-eng-review": planEngReview,
-  "qa-review": qaReview,
+  "ready-check": readyCheck,
   "resume-from-handoff": resumeFromHandoff,
   "retro": retro,
   "start-feature": startFeature,
   "start-work": startWork,
   "write-plan": writePlan,
-  "write-spec": writeSpec
+  "write-brief": writeBrief
 }

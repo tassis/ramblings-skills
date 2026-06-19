@@ -79,7 +79,7 @@ Ask the reviewer to check these areas:
 
 - Prefer a focused review over dumping the entire session history.
 - Point the reviewer at the files and behavior that matter most.
-- If the task came from `.ramblings/specs/` or `.ramblings/plans/`, reference that artifact.
+- If the task came from `.ramblings/briefs/` or `.ramblings/plans/`, reference that artifact.
 - If the codebase is fragile, say so explicitly.
 
 ## Severity handling

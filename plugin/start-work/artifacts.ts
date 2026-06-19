@@ -1,12 +1,18 @@
 import { readFile, readdir } from "node:fs/promises"
 import path from "node:path"
 import {
+  type StartWorkArchiveAction,
+  type StartWorkArchiveDecision,
+  type StartWorkArchiveDiscoveryResult,
+  type StartWorkArchiveEligibilityInput,
   type StartWorkArtifactResolution,
   type StartWorkChecklistState,
   type StartWorkPlanCandidate,
+  type StartWorkReadyCheckStatus,
   type StartWorkTaskSelection,
 } from "./types"
 import { readChecklistState } from "./checklist"
+import { findSimplePathArchiveCandidate, decideSimplePathArchiveEligibility, performSimplePathArchive } from "./archive"
 
 const RAMBLINGS_DIR = ".ramblings"
 const PLANS_DIR = path.posix.join(RAMBLINGS_DIR, "plans")
@@ -16,6 +22,76 @@ const ARCHIVE_DIR = path.posix.join(RAMBLINGS_DIR, "archive")
 
 export async function resolveStartWorkArtifacts(projectRoot: string): Promise<StartWorkArtifactResolution> {
   const checklistCandidates = await readChecklistCandidates(projectRoot)
+  const archiveCandidate = findSimplePathArchiveCandidate(
+    checklistCandidates
+      .filter(({ checklist }) => hasCompletedWorkUnit(checklist))
+      .map((entry) => ({
+        candidate: entry.candidate,
+        checklist: entry.checklist,
+        readyCheckStatus: entry.readyCheckStatus,
+        handoffClaimsActiveWork: entry.handoffClaimsActiveWork,
+      })),
+  )
+
+  if (archiveCandidate.kind === "auto-archive") {
+    const completedEntry = checklistCandidates.find(({ candidate }) => candidate.planPath === archiveCandidate.candidate?.planPath)
+
+    if (!archiveCandidate.candidate || !completedEntry) {
+      return {
+        kind: "ask-user",
+        reason: "Simple-path archive candidate could not be resolved safely for entry-time cleanup.",
+        candidates: checklistCandidates.filter(({ checklist }) => hasIncompleteTasks(checklist)).map(({ candidate }) => candidate),
+      }
+    }
+
+    let archiveAction: StartWorkArchiveAction
+
+    try {
+      archiveAction = await performSimplePathArchive(projectRoot, archiveCandidate.candidate, completedEntry.checklist)
+    } catch (error) {
+      return {
+        kind: "ask-user",
+        reason: error instanceof Error ? error.message : "Entry-time archive packaging failed unexpectedly.",
+        candidates: checklistCandidates.map(({ candidate }) => candidate),
+      }
+    }
+
+    const refreshedChecklistCandidates = await readChecklistCandidates(projectRoot)
+    const activeChecklistCandidates = refreshedChecklistCandidates.filter(({ checklist }) => hasIncompleteTasks(checklist))
+
+    if (activeChecklistCandidates.length > 1) {
+      return {
+        kind: "ask-user",
+        reason: "Multiple unfinished YAML checklists remain active under project-root .ramblings/checklists/.",
+        candidates: activeChecklistCandidates.map(({ candidate }) => candidate),
+      }
+    }
+
+    if (activeChecklistCandidates.length === 1) {
+      const { candidate, checklist } = activeChecklistCandidates[0]
+      return {
+        kind: "resolved",
+        candidate,
+        checklist,
+        archiveAction,
+      }
+    }
+
+    return {
+      kind: "no-active-plan",
+      reason: "Entry-time simple-path archive cleanup succeeded, and no unfinished plan remains active under the project-root .ramblings/ directory.",
+      archiveAction,
+    }
+  }
+
+  if (archiveCandidate.kind === "ask-user") {
+    return {
+      kind: "ask-user",
+      reason: archiveCandidate.reason,
+      candidates: checklistCandidates.filter(({ checklist }) => hasCompletedWorkUnit(checklist) || hasIncompleteTasks(checklist)).map(({ candidate }) => candidate),
+    }
+  }
+
   const activeChecklistCandidates = checklistCandidates.filter(({ checklist }) => hasIncompleteTasks(checklist))
 
   if (activeChecklistCandidates.length > 1) {
@@ -50,6 +126,14 @@ export async function resolveStartWorkArtifacts(projectRoot: string): Promise<St
       kind: "resolved",
       candidate: planCandidates[0],
       checklist: null,
+    }
+  }
+
+  if (archiveCandidate.kind === "defer") {
+    return {
+      kind: "ask-user",
+      reason: archiveCandidate.reason,
+      candidates: checklistCandidates.filter(({ checklist }) => hasCompletedWorkUnit(checklist)).map(({ candidate }) => candidate),
     }
   }
 
@@ -119,6 +203,14 @@ export function getNextRunnableTask(checklist: StartWorkChecklistState): StartWo
   }
 }
 
+export function decideWorkUnitArchiveEligibility(input: StartWorkArchiveEligibilityInput): StartWorkArchiveDecision {
+  return decideSimplePathArchiveEligibility(input)
+}
+
+function hasCompletedWorkUnit(checklist: StartWorkChecklistState) {
+  return checklist.tasks.length > 0 && checklist.tasks.every((task) => task.status === "complete")
+}
+
 function hasIncompleteTasks(checklist: StartWorkChecklistState) {
   return checklist.tasks.some((task) => task.status !== "complete")
 }
@@ -126,7 +218,7 @@ function hasIncompleteTasks(checklist: StartWorkChecklistState) {
 async function readChecklistCandidates(projectRoot: string) {
   const checklistDir = path.join(projectRoot, CHECKLISTS_DIR)
   const checklistFiles = await listFilesSafe(checklistDir, ".yaml")
-  const candidates: Array<{ candidate: StartWorkPlanCandidate; checklist: StartWorkChecklistState }> = []
+  const candidates: Array<{ candidate: StartWorkPlanCandidate; checklist: StartWorkChecklistState; readyCheckStatus: StartWorkReadyCheckStatus | null; handoffClaimsActiveWork: boolean }> = []
 
   for (const checklistFile of checklistFiles) {
     const checklistPath = path.join(checklistDir, checklistFile)
@@ -137,15 +229,19 @@ async function readChecklistCandidates(projectRoot: string) {
     }
 
     const planPath = normalizeRamblingsRelativePath(checklist.plan)
-    const handoffPath = await findLinkedHandoff(projectRoot, planPath)
+    const handoff = await findLinkedHandoff(projectRoot, planPath)
+    const readyCheck = await findLinkedReadyCheck(projectRoot, planPath)
 
     candidates.push({
       candidate: {
         planPath,
         checklistPath: toProjectRelative(projectRoot, checklistPath),
-        handoffPath,
+        handoffPath: handoff?.path ?? null,
+        readyCheckPath: readyCheck?.path ?? null,
       },
       checklist,
+      readyCheckStatus: readyCheck?.status ?? null,
+      handoffClaimsActiveWork: handoff?.claimsActiveWork ?? false,
     })
   }
 
@@ -171,14 +267,75 @@ async function readPlanCandidates(projectRoot: string) {
       continue
     }
 
+    const handoff = await findLinkedHandoff(projectRoot, relativePlanPath)
+
     candidates.push({
       planPath: relativePlanPath,
       checklistPath: null,
-      handoffPath: await findLinkedHandoff(projectRoot, relativePlanPath),
+      handoffPath: handoff?.path ?? null,
+      readyCheckPath: (await findLinkedReadyCheck(projectRoot, relativePlanPath))?.path ?? null,
     })
   }
 
   return candidates
+}
+
+async function findLinkedReadyCheck(projectRoot: string, planPath: string) {
+  const ramblingsDir = path.join(projectRoot, RAMBLINGS_DIR)
+  const topLevelEntries = await listDirectoriesSafe(ramblingsDir)
+  const planStem = path.basename(planPath, ".md")
+  const matches: Array<{ path: string; status: StartWorkReadyCheckStatus }> = []
+
+  for (const directoryName of topLevelEntries) {
+    if (directoryName === "archive") {
+      continue
+    }
+
+    const directoryPath = path.join(ramblingsDir, directoryName)
+    const markdownFiles = await listFilesSafe(directoryPath, ".md")
+
+    for (const markdownFile of markdownFiles) {
+      const absolutePath = path.join(directoryPath, markdownFile)
+      const text = await readTextSafe(absolutePath)
+
+      if (!text || !text.includes("## Ready Check")) {
+        continue
+      }
+
+      if (!text.includes(planPath) && !markdownFile.includes(planStem)) {
+        continue
+      }
+
+      const status = parseReadyCheckStatus(text)
+
+      if (status) {
+        matches.push({
+          path: toProjectRelative(projectRoot, absolutePath),
+          status,
+        })
+      }
+    }
+  }
+
+  return matches.sort((left, right) => right.path.localeCompare(left.path))[0] ?? null
+}
+
+function parseReadyCheckStatus(text: string): StartWorkReadyCheckStatus | null {
+  const match = text.match(/\*\*Status:\*\*\s*(ready for review|ready for user validation|ready|not ready)/i)
+  const status = match?.[1]?.toLowerCase()
+
+  switch (status) {
+    case "ready":
+      return "ready"
+    case "ready for review":
+      return "ready-for-review"
+    case "ready for user validation":
+      return "ready-for-user-validation"
+    case "not ready":
+      return "not-ready"
+    default:
+      return null
+  }
 }
 
 function isCompletedPlan(planText: string) {
@@ -191,6 +348,7 @@ async function findLinkedHandoff(projectRoot: string, planPath: string) {
   const handoffDir = path.join(projectRoot, HANDOFFS_DIR)
   const handoffFiles = await listFilesSafe(handoffDir, ".md")
   const sortedHandoffs = [...handoffFiles].sort().reverse()
+  const planStem = path.basename(planPath, ".md")
 
   for (const handoffFile of sortedHandoffs) {
     const absolutePath = path.join(handoffDir, handoffFile)
@@ -200,12 +358,20 @@ async function findLinkedHandoff(projectRoot: string, planPath: string) {
       continue
     }
 
-    if (handoffText.includes(planPath)) {
-      return toProjectRelative(projectRoot, absolutePath)
+    if (handoffText.includes(planPath) || handoffFile.includes(planStem)) {
+      return {
+        path: toProjectRelative(projectRoot, absolutePath),
+        claimsActiveWork: handoffClaimsActiveWork(handoffText),
+      }
     }
   }
 
   return null
+}
+
+function handoffClaimsActiveWork(handoffText: string) {
+  const normalized = handoffText.toLowerCase()
+  return normalized.includes("remaining active execution work") || normalized.includes("status: active")
 }
 
 async function listFilesSafe(directory: string, extension: string) {
@@ -214,6 +380,18 @@ async function listFilesSafe(directory: string, extension: string) {
 
     return entries
       .filter((entry) => entry.isFile() && entry.name.endsWith(extension))
+      .map((entry) => entry.name)
+  } catch {
+    return []
+  }
+}
+
+async function listDirectoriesSafe(directory: string) {
+  try {
+    const entries = await readdir(directory, { withFileTypes: true })
+
+    return entries
+      .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
   } catch {
     return []

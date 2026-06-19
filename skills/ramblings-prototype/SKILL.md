@@ -30,7 +30,7 @@ Answer a focused question quickly without pretending the result is production-re
 If a written artifact is helpful, record it under:
 
 ```text
-.ramblings/specs/YYYY-MM-DD-<topic>-prototype.md
+.ramblings/briefs/YYYY-MM-DD-<topic>-prototype.md
 ```
 
 ## Suggested output
@@ -53,4 +53,4 @@ If a written artifact is helpful, record it under:
 
 - prefer the smallest experiment that answers the question;
 - call out what remains unproven;
-- if the prototype is successful and the user wants to continue, move to `ramblings-spec-writing` or `ramblings-writing-plans`.
+- if the prototype is successful and the user wants to continue, move to `ramblings-brief-writing` or `ramblings-writing-plans`.

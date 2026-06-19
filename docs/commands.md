@@ -1,10 +1,10 @@
 # Commands
 
-These commands are injected by `plugin/ramblings-plugin.ts`.
+This page is the command reference for ramblings.
 
-## conductor
+Use it when you already know you want a command-first entrypoint and need the quickest way to start the right workflow.
 
-Use to enter Conductor Mode for planning-only work on project-root `.ramblings/` artifacts.
+For deeper workflow routing across skills, see [`docs/skills.md`](skills.md).
 
 ## office-hours
 
@@ -12,43 +12,39 @@ Use for early discussion, scope discovery, and feature or product shaping.
 
 ## start-feature
 
-Use for a substantial feature or project workflow that should move from discussion through spec, plan, execution, and ready-check.
+Use for a substantial feature or project workflow that should move from discussion through brief, plan, execution, and ready-check.
+
+This is the primary umbrella entrypoint for end-to-end lifecycle work.
 
 ## challenge-me
 
-Use for structured multi-perspective challenge of the current idea, spec, plan, or in-progress change.
+Use for structured multi-perspective challenge of the current idea, brief, plan, or in-progress change.
 
-This command routes through the shared `Reviewer` agent (`@reviewer`) while instructing `ramblings-challenge-me`.
+This command routes through the shared `Reviewer` agent (`@reviewer`) for a structured multi-perspective review panel.
 
-For panel reviews, `ramblings-challenge-me` should spawn one independent reviewer invocation per selected lens and synthesize only after those lane-specific positions are explicit.
+For panel reviews, it should spawn one independent reviewer invocation per selected lens and synthesize only after those lane-specific positions are explicit.
+
+Use `challenge-me` for multi-lens review panels, not for ordinary single-lens review requests.
 
 ## grill-me
 
-Use for one-question-at-a-time pressure testing of the current idea, spec, plan, or approach.
+Use for one-question-at-a-time pressure testing of the current idea, brief, plan, or approach.
 
-This command stays skill-first and instructs `ramblings-grill-me` directly rather than routing through the shared `Reviewer` panel carrier.
+This command stays question-driven rather than using the shared `Reviewer` panel flow.
 
-## plan-ceo-review
+For ordinary direct single-lens review, prefer using `@reviewer` with the requested angle explicitly instead of reaching for a panel workflow.
 
-Use for product-oriented challenge of a spec or plan.
+Examples:
 
-This command now routes through the shared `Reviewer` agent (`@reviewer`) while still instructing `ramblings-product-review`.
-
-## plan-eng-review
-
-Use for engineering-oriented challenge of a spec or plan.
-
-This command now routes through the shared `Reviewer` agent (`@reviewer`) while still instructing `ramblings-engineering-review`.
-
-## qa-review
-
-Use for failure-mode and verification challenge.
-
-This command now routes through the shared `Reviewer` agent (`@reviewer`) while still instructing `ramblings-qa-review`.
+- `@reviewer` — review this plan from the product perspective
+- `@reviewer` — review this change from the engineering perspective
+- `@reviewer` — review this feature from the QA perspective
 
 ## careful
 
 Use to shift into a more conservative, high-risk workflow posture.
+
+This is the primary entrypoint for careful/high-risk posture.
 
 ## handoff
 
@@ -58,7 +54,7 @@ Create a compact dated artifact under `.ramblings/handoffs/`.
 
 - Keep handoffs append-only; do not overwrite a single `current.md` file.
 - New handoffs should include compact frontmatter metadata: `topic`, `work_unit`, `references`, optional `supersedes`, and `status`.
-- Keep the body reference-first rather than duplicating full specs or plans.
+- Keep the body reference-first rather than duplicating full briefs or plans.
 
 ## resume-from-handoff
 
@@ -98,9 +94,21 @@ Use to capture lessons learned after meaningful work.
 
 Use to understand how an existing system or flow works before deciding next action.
 
-## write-spec
+## ready-check
 
-Use to turn discussion into a written spec.
+Use to make an evidence-based readiness call before claiming work is ready for review, validation, completion, or archive.
+
+This is the command-first readiness gate.
+
+## archive
+
+Use for explicit cleanup and archive work once a work unit is no longer an active execution candidate.
+
+Use this when you want operator-driven archive cleanup or consolidation. For simple entry-time cleanup of one clearly completed work unit, `/start-work` may handle it automatically.
+
+## write-brief
+
+Use to turn converged discussion into a written brief.
 
 ## write-plan
 
@@ -119,14 +127,42 @@ The plugin also exposes small deterministic custom tools for `start-work` so age
 Use the repo-prefixed helper tool names when calling them directly:
 
 - `ramblings_start_work_resolve`
-- `ramblings_start_work_begin_task`
+- `ramblings_start_work_record_terminal`
+- `ramblings_start_work_reconcile_and_rerun`
 - `ramblings_start_work_record_blocked`
-- `ramblings_start_work_record_completion`
 - `ramblings_start_work_rerun_continuation`
 
-Do not rely on unprefixed `start_work_*` names in the host runtime.
+Minimum helper metadata contract:
 
-Within this framework, `start-work` is the primary execution surface. Plans make work executable, checklists keep execution state durable, and the tool-backed path keeps the most mechanical transitions deterministic without claiming a full autonomous scheduler.
+- `ramblings_start_work_resolve`
+  - stable metadata fields: `ok`, `artifactResolutionKind`, `checklistPath`, `planPath`, optional `taskSelectionKind`, `continuationKind`, `activeTaskId`, `reason`, `note`, `archiveAction`
+- `ramblings_start_work_record_blocked`
+  - stable metadata fields: `ok`, `taskId`, `checklistPath`, `executionState`, `blockedBy`, `unblockWhen`, `nextAction`
+- `ramblings_start_work_record_terminal`
+  - stable metadata fields: `ok`, `status`, `taskId`, `checklistPath`, `executionState`, `delegationStatus`, `message`
+  - `ok: true` means the helper completed successfully (`recorded` or idempotent `already-handled`)
+  - `ok: false` means the helper detected a workflow failure (`mismatch` or internal `error`); these no longer coexist with `ok: true`
+- `ramblings_start_work_reconcile_and_rerun`
+  - stable metadata fields: `ok`, `taskId`, `checklistPath`, `executionState`, `continuationKind`, `activeTaskId`, `reason`, `note`
+- `ramblings_start_work_rerun_continuation`
+  - stable metadata fields: `ok`, `checklistPath`, `planPath`, `continuationKind`, `activeTaskId`, `reason`, `note`
+- checklist read errors should report one of: `CHECKLIST_NOT_FOUND`, `CHECKLIST_PARSE_FAILED`, or `CHECKLIST_VALIDATION_FAILED`
+
+Within this framework, `start-work` is the primary execution surface. Plans make work executable, checklists keep execution state durable, and the retained helper path covers the non-trivial mechanics without claiming a full autonomous scheduler. Direct checklist edits remain acceptable for simple begin/complete transitions when no delegation, terminal-result handling, or continuation mechanics are involved.
+
+The currently supported runtime boundary is **post-completion / half-automatic re-entry**, not a guaranteed pre-stop auto-resume callback. Completion may become observable, terminal state may be recorded and reconciled, and continuation may be rerun from persisted checklist state. When that automatic re-entry path is unavailable or insufficient, fall back to an explicit `/start-work` resume or equivalent session continuation.
+
+Dispatch policy for `/start-work` is **subagent-first** when the next slice is bounded, specialist-shaped, and independently finishable. Keep orchestrator-direct work narrow:
+
+- control-plane and artifact-state operations
+- terminal-result reconciliation
+- verification
+- very small synchronous checks
+- no-viable-delegation cases where delegation overhead clearly exceeds the work
+
+Do not treat orchestrator self-parallelism as the default replacement for specialist delegation, and do not describe the current helper path as a full scheduler.
+
+On entry, `/start-work` may evaluate completed work units for simple-path archive cleanup before resuming unfinished work. The first iteration is intentionally narrow: if exactly one completed work unit is clearly archive-eligible, it may package that work unit into `.ramblings/archive/`, clean the active-area plan/checklist copies, and then rerun discovery; ambiguous, missing-ready-check, or source-of-truth-conflicted cases must defer or ask instead of silently batch-archiving.
 
 Recommended YAML execution-state shape:
 
@@ -135,17 +171,17 @@ plan: .ramblings/plans/YYYY-MM-DD-topic.md
 active_task: task-2
 execution_state: running
 delegations:
-  - name: resolver-implementation
-    role: fixer
+  - name: repo-discovery
+    role: explorer
     task_id: ses_xxx
     task_ref: task-2
     status: running
 tasks:
   - id: task-2
-    title: Add active artifact and next-task resolver helpers
+    title: Review helper-tool output contract examples
     status: in_progress
     delegated_to:
-      role: fixer
+      role: reviewer
       task_id: ses_xxx
     waiting_on: lane_completion
     blocked_by: null
@@ -159,7 +195,7 @@ Rules:
 - `status` remains the primary task state; do not replace it with `delegated`.
 - Top-level `delegations` may record participating specialist sessions for resume/reconcile support.
 - Delegation and waiting should be expressed as annotations such as `delegated_to` and `waiting_on`.
-- The tool-backed path is deterministic for state transitions, but it is still bounded by the command/skill contract rather than a full scheduler.
+- The tool-backed path is reserved for artifact resolution, terminal-result recording, terminal reconciliation + rerun, blocker recording, and continuation decisions; simple begin/complete checklist state changes may be written directly only when those mechanics are not involved.
 - First iteration scope assumes one active task and at most one active delegated lane per task.
 - First iteration scope is sequential by default and does not assume routine same-type parallel delegation.
 - Recommended registry lifecycle: `running` → `terminal_unreconciled` → `terminal_reconciled`, with `cancelled_obsolete` reserved for stale-lane cleanup after verified terminal completion.
@@ -168,4 +204,6 @@ Active discovery should ignore `.ramblings/archive/**`; archived plans are histo
 
 Archive only after the work is truly complete enough that no active execution should resume from it.
 
-There is currently no dedicated archive command. Archive is an explicit operator action: once the work is no longer an active execution candidate, move the completed plan and its owning checklist into a plan-unit archive directory under `.ramblings/archive/`.
+`ready-check` is a dedicated command-first readiness gate for evidence-based readiness claims.
+
+`archive` is a dedicated operator-facing cleanup/consolidation command for completed work units and source-of-truth cleanup. `/start-work` may auto-archive only the extremely narrow single-work-unit simple path at entry; broader cleanup, consolidation, and ambiguity resolution still belong to the explicit `archive` command.

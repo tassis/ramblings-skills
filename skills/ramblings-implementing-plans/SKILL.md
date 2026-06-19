@@ -40,6 +40,67 @@ Follow these rules:
 6. Do not create commits unless the user explicitly asks.
 7. Treat execution state as part of the deliverable, not as disposable session memory.
 
+## Execution method choices
+
+During real plan execution, this skill also owns the execution-strategy guidance.
+
+Choose the smallest method that preserves quality and keeps the work reviewable:
+
+### 1. Inline execution
+
+Prefer inline execution when:
+
+- the change is small;
+- the work is concentrated in one or two files;
+- the coordination overhead would exceed the benefit of delegation.
+
+### 2. Plan-driven sequential execution
+
+Prefer this when:
+
+- a written plan already exists;
+- tasks depend on each other;
+- you want steady progress with verification between tasks.
+
+This is the default mode for normal plan execution.
+
+### 3. Delegated subagent execution
+
+Prefer delegated bounded work when:
+
+- the task is clearly described;
+- the work is non-trivial enough that delegation saves time;
+- the output can be reviewed as a self-contained result.
+
+Good candidates:
+
+- test-file work;
+- focused implementation in one folder;
+- isolated documentation generation;
+- clearly scoped investigation.
+
+### 4. Limited parallel execution
+
+Prefer limited parallel execution only when:
+
+- subtasks are truly independent;
+- integration order is already understood;
+- each lane can succeed without waiting on another lane.
+
+Do not parallelize when:
+
+- multiple tasks edit the same files or same logic seam;
+- the second task depends on the exact result of the first;
+- requirements are still changing;
+- the overhead of explaining the task is too high.
+
+Regardless of method, keep these checkpoints:
+
+1. confirm the next task;
+2. implement the smallest meaningful slice;
+3. verify that slice;
+4. decide whether to continue, review, or re-plan.
+
 ## Basic flow
 
 ### 1. Read the plan fully

@@ -1,13 +1,31 @@
 import { tool } from "@opencode-ai/plugin"
-import { beginTaskExecution, recordBlockedTask, recordTaskCompletion, rerunContinuation, resolveStartWorkLoop } from "../start-work/index"
-import { readChecklistState, writeChecklistState } from "../start-work/checklist"
+import { recordBlockedTask, recordDelegatedLaneTerminalOutcome, reconcileAndRerunContinuation, rerunContinuation, resolveStartWorkLoop } from "../start-work/index"
+import { readChecklistStateDetailed, writeChecklistState } from "../start-work/checklist"
+import type {
+  StartWorkContinuation,
+  StartWorkRecordTerminalToolMetadata,
+  StartWorkRecordBlockedToolMetadata,
+  StartWorkRerunContinuationToolMetadata,
+  StartWorkResolveToolMetadata,
+  StartWorkToolErrorMetadata,
+} from "../start-work/types"
 
-function okToolResult(output: string) {
-  return output
+function okToolResult<T extends object>(output: string, metadata?: T) {
+  return {
+    output,
+    metadata,
+  }
 }
 
-function errorToolResult(code: string, message: string) {
-  return `${code}: ${message}`
+function errorToolResult(code: StartWorkToolErrorMetadata["code"], message: string, metadata?: Omit<StartWorkToolErrorMetadata, "ok" | "code">) {
+  return {
+    output: `${code}: ${message}`,
+    metadata: {
+      ok: false,
+      code,
+      ...metadata,
+    },
+  }
 }
 
 const projectRootArgs = {
@@ -19,31 +37,65 @@ const projectRootChecklistArgs = {
   checklist_path: tool.schema.string().describe("Checklist path relative to the project root")
 } as const
 
+const projectRootChecklistTaskArgs = {
+  ...projectRootChecklistArgs,
+  task_id: tool.schema.string().describe("Task identifier to mark terminal"),
+  note: tool.schema.string().describe("Update note written to checklist state")
+} as const
+
 export const startWorkTools = {
   ramblings_start_work_resolve: tool({
     description: "Resolve the active start-work candidate and continuation outcome.",
     args: projectRootArgs,
     async execute({ project_root }: { project_root: string }) {
-      await resolveStartWorkLoop(project_root)
-      return okToolResult(`Resolved start-work state for ${project_root}.`)
-    }
-  }),
+      const resolution = await resolveStartWorkLoop(project_root)
 
-  ramblings_start_work_begin_task: tool({
-    description: "Mark a checklist task in progress and set the active execution state.",
-    args: {
-      ...projectRootChecklistArgs,
-      task_id: tool.schema.string().describe("Task identifier to mark in progress"),
-      note: tool.schema.string().describe("Update note written to checklist state")
-    } as const,
-    async execute({ project_root, checklist_path, task_id, note }: { project_root: string; checklist_path: string; task_id: string; note: string }) {
-      const checklist = await readChecklistState(project_root, checklist_path)
-      if (!checklist) {
-        return errorToolResult("CHECKLIST_NOT_FOUND", "Checklist could not be read.")
+      if ("checklistPath" in resolution) {
+        const metadata: StartWorkResolveToolMetadata = {
+          ok: true,
+          artifactResolutionKind: "resolved",
+          checklistPath: resolution.checklistPath,
+          planPath: resolution.checklist.plan,
+          taskSelectionKind: resolution.taskSelection.kind,
+          continuationKind: resolution.continuation.kind,
+          activeTaskId: resolution.continuation.activeTaskId,
+          reason: resolution.continuation.reason,
+          note: resolution.continuation.note ?? null,
+          archiveAction: resolution.archiveAction ?? null,
+        }
+
+        return okToolResult(`Resolved start-work state for ${project_root}.`, metadata)
       }
-      const updated = beginTaskExecution(checklist, task_id, note)
-      await writeChecklistState(project_root, checklist_path, updated)
-      return okToolResult(`Marked ${task_id} in progress in ${checklist_path}.`)
+
+      if ("artifactResolutionKind" in resolution) {
+        const metadata: StartWorkResolveToolMetadata = {
+          ok: true,
+          artifactResolutionKind: resolution.artifactResolutionKind,
+          checklistPath: null,
+          planPath: null,
+          continuationKind: resolution.continuation.kind,
+          activeTaskId: resolution.continuation.activeTaskId,
+          reason: resolution.continuation.reason,
+          note: resolution.continuation.note ?? null,
+          archiveAction: null,
+        }
+
+        return okToolResult(`Resolved start-work state for ${project_root}.`, metadata)
+      }
+
+      const metadata: StartWorkResolveToolMetadata = {
+        ok: true,
+        artifactResolutionKind: "resolved",
+        checklistPath: null,
+        planPath: null,
+        continuationKind: resolution.kind,
+        activeTaskId: resolution.activeTaskId,
+        reason: resolution.reason,
+        note: resolution.note ?? null,
+        archiveAction: null,
+      }
+
+      return okToolResult(`Resolved start-work state for ${project_root}.`, metadata)
     }
   }),
 
@@ -58,31 +110,27 @@ export const startWorkTools = {
       note: tool.schema.string().describe("Update note written to checklist state")
     } as const,
     async execute({ project_root, checklist_path, task_id, blocked_by, unblock_when, next_action, note }: { project_root: string; checklist_path: string; task_id: string; blocked_by: string; unblock_when: string; next_action: string; note: string }) {
-      const checklist = await readChecklistState(project_root, checklist_path)
-      if (!checklist) {
-        return errorToolResult("CHECKLIST_NOT_FOUND", "Checklist could not be read.")
+      const readResult = await readChecklistStateDetailed(project_root, checklist_path)
+      if (readResult.kind !== "ok") {
+        return checklistReadErrorToolResult(readResult, {
+          checklistPath: checklist_path,
+          taskId: task_id,
+        })
       }
+      const checklist = readResult.checklist
       const updated = recordBlockedTask(checklist, task_id, blocked_by, unblock_when, next_action, note)
       await writeChecklistState(project_root, checklist_path, updated)
-      return okToolResult(`Marked ${task_id} blocked in ${checklist_path}.`)
-    }
-  }),
-
-  ramblings_start_work_record_completion: tool({
-    description: "Mark a checklist task complete after verification and clear delegation state.",
-    args: {
-      ...projectRootChecklistArgs,
-      task_id: tool.schema.string().describe("Task identifier to mark complete"),
-      note: tool.schema.string().describe("Update note written to checklist state")
-    } as const,
-    async execute({ project_root, checklist_path, task_id, note }: { project_root: string; checklist_path: string; task_id: string; note: string }) {
-      const checklist = await readChecklistState(project_root, checklist_path)
-      if (!checklist) {
-        return errorToolResult("CHECKLIST_NOT_FOUND", "Checklist could not be read.")
+      const metadata: StartWorkRecordBlockedToolMetadata = {
+        ok: true,
+        taskId: task_id,
+        checklistPath: checklist_path,
+        executionState: updated.execution_state,
+        blockedBy: blocked_by,
+        unblockWhen: unblock_when,
+        nextAction: next_action,
       }
-      const updated = recordTaskCompletion(checklist, task_id, note)
-      await writeChecklistState(project_root, checklist_path, updated)
-      return okToolResult(`Marked ${task_id} complete in ${checklist_path}.`)
+
+      return okToolResult(`Marked ${task_id} blocked in ${checklist_path}.`, metadata)
     }
   }),
 
@@ -90,12 +138,94 @@ export const startWorkTools = {
     description: "Recompute the next start-work continuation outcome from current checklist state.",
     args: projectRootChecklistArgs,
     async execute({ project_root, checklist_path }: { project_root: string; checklist_path: string }) {
-      const checklist = await readChecklistState(project_root, checklist_path)
-      if (!checklist) {
-        return errorToolResult("CHECKLIST_NOT_FOUND", "Checklist could not be read.")
+      const readResult = await readChecklistStateDetailed(project_root, checklist_path)
+      if (readResult.kind !== "ok") {
+        return checklistReadErrorToolResult(readResult, {
+          checklistPath: checklist_path,
+        })
       }
-      rerunContinuation(checklist)
-      return okToolResult(`Recomputed continuation for ${checklist_path}.`)
+      const continuation = rerunContinuation(readResult.checklist)
+      return okToolResult(`Recomputed continuation for ${checklist_path}.`, continuationMetadata(checklist_path, readResult.checklist.plan, continuation))
+    }
+  }),
+
+  ramblings_start_work_reconcile_and_rerun: tool({
+    description: "Perform deterministic terminal reconciliation and rerun continuation without dispatching the next lane.",
+    args: {
+      ...projectRootChecklistTaskArgs,
+      note: tool.schema.string().describe("Reconciliation note written to checklist state"),
+    } as const,
+    async execute({ project_root, checklist_path, task_id, note }: { project_root: string; checklist_path: string; task_id: string; note: string }) {
+      const readResult = await readChecklistStateDetailed(project_root, checklist_path)
+      if (readResult.kind !== "ok") {
+        return checklistReadErrorToolResult(readResult, { checklistPath: checklist_path, taskId: task_id })
+      }
+
+      const result = reconcileAndRerunContinuation(readResult.checklist, task_id, note)
+      await writeChecklistState(project_root, checklist_path, result.checklist)
+
+      return okToolResult(
+        `Reconciled terminal result and recomputed continuation for ${task_id} in ${checklist_path}.`,
+        {
+          ok: true,
+          checklistPath: checklist_path,
+          taskId: task_id,
+          executionState: result.checklist.execution_state,
+          continuationKind: result.continuation.kind,
+          activeTaskId: result.continuation.activeTaskId,
+          reason: result.continuation.reason,
+          note: result.continuation.note ?? null,
+        },
+      )
+    }
+  }),
+
+  ramblings_start_work_record_terminal: tool({
+    description: "Record a delegated lane terminal result deterministically and clear task-level delegation fields.",
+    args: projectRootChecklistTaskArgs,
+    async execute({ project_root, checklist_path, task_id, note }: { project_root: string; checklist_path: string; task_id: string; note: string }) {
+      const readResult = await readChecklistStateDetailed(project_root, checklist_path)
+      if (readResult.kind !== "ok") {
+        return checklistReadErrorToolResult(readResult, { checklistPath: checklist_path, taskId: task_id })
+      }
+
+      const outcome = recordDelegatedLaneTerminalOutcome(readResult.checklist, task_id, note)
+      if (outcome.kind === "recorded") {
+        await writeChecklistState(project_root, checklist_path, outcome.checklist)
+      }
+
+      const metadata: StartWorkRecordTerminalToolMetadata = {
+        ...outcome.metadata,
+        checklistPath: checklist_path,
+      }
+
+      return okToolResult(outcome.message, metadata)
     }
   })
 } as const
+
+function continuationMetadata(checklistPath: string, planPath: string, continuation: StartWorkContinuation): StartWorkRerunContinuationToolMetadata {
+  return {
+    ok: true,
+    checklistPath,
+    planPath,
+    continuationKind: continuation.kind,
+    activeTaskId: continuation.activeTaskId,
+    reason: continuation.reason,
+    note: continuation.note ?? null,
+  }
+}
+
+function checklistReadErrorToolResult(
+  readResult: Exclude<Awaited<ReturnType<typeof readChecklistStateDetailed>>, { kind: "ok" }>,
+  metadata?: Omit<StartWorkToolErrorMetadata, "ok" | "code">,
+) {
+  switch (readResult.kind) {
+    case "not-found":
+      return errorToolResult("CHECKLIST_NOT_FOUND", readResult.message, metadata)
+    case "validation-failed":
+      return errorToolResult("CHECKLIST_VALIDATION_FAILED", readResult.message, metadata)
+    case "parse-failed":
+      return errorToolResult("CHECKLIST_PARSE_FAILED", readResult.message, metadata)
+  }
+}
