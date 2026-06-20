@@ -12,7 +12,7 @@ Use for early discussion, scope discovery, and feature or product shaping.
 
 ## start-feature
 
-Use for a substantial feature or project workflow that should move from discussion through brief, plan, execution, and ready-check.
+Use for a substantial feature or project workflow that should move from discussion through brief-first planning, and only escalate to a plan when explicitly requested or the work is clearly implementation-ready for direct planning.
 
 This is the primary umbrella entrypoint for end-to-end lifecycle work.
 
@@ -112,7 +112,7 @@ Use to turn converged discussion into a written brief.
 
 ## write-plan
 
-Use to turn an approved direction into an implementation plan.
+Use to turn an approved direction into an implementation plan when the user explicitly wants a plan or the work is clearly implementation-ready / direct landing is accepted.
 
 ## start-work
 

@@ -1,6 +1,6 @@
 ---
 name: ramblings-writing-plans
-description: Existing project implementation plan, legacy maintenance plan, .ramblings plans. Use when a task on an existing codebase is multi-step, risky, spans multiple files, or needs discussion before editing. Write concrete plans into .ramblings/plans/ with exact files, ordered tasks, and verification steps.
+description: Existing project implementation plan, legacy maintenance plan, .ramblings plans. Prefer brief-first by default; use for multi-step execution only when the work is implementation-ready, the user explicitly asks for a plan, or the user explicitly accepts direct plan mode. Write concrete plans into .ramblings/plans/ with exact files, ordered tasks, and verification steps.
 ---
 
 # Maintenance Writing Plans
@@ -38,7 +38,8 @@ Use this skill when:
 
 - the task is multi-step;
 - the task touches multiple files or subsystems;
-- you need to discuss approach before editing;
+- the user explicitly asks for an implementation plan or allows direct planning/landing;
+- the work is clearly implementation-ready with concrete files, ordered steps, and verification;
 - the existing project is risky enough that execution should be guided by a written plan.
 
 Do not use it for trivial one-file tweaks unless the user explicitly asks for a written plan.

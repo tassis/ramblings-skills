@@ -5,7 +5,7 @@ description: Triage, issue intake, bug-or-feature sorting, information gathering
 
 # Ramblings Triage
 
-Use this skill when the request is still too messy to act on directly.
+Use this skill when the request is still too messy to act on directly, and route ambiguous or unconverged requests toward brief-writing by default.
 
 ## Goal
 
@@ -46,7 +46,7 @@ Typical routes:
 - `ramblings-investigation`
 - `ramblings-systematic-debugging`
 - `ramblings-brief-writing`
-- `ramblings-writing-plans`
+- `ramblings-writing-plans` (only when work is already implementation-ready or the user explicitly asked for a plan)
 
 ## Suggested output
 

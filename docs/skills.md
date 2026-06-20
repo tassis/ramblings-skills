@@ -10,7 +10,7 @@ Quick routing:
 
 - discuss or shape direction → `office-hours`
 - write the converged discussion down → `write-brief`
-- turn it into execution tasks → `write-plan`
+- turn it into execution tasks only when the user asks for a plan or work is clearly implementation-ready → `write-plan`
 - execute an existing plan → `start-work`
 - summarize readiness evidence → `ready-check`
 - challenge from one or more review perspectives → `challenge-me`
@@ -143,7 +143,7 @@ If neither handoff supersedes the other and the current plan/checklist/brief sta
 | [`ramblings-brainstorming`](../skills/ramblings-brainstorming/SKILL.md) | Collaborative discussion and decision support. | You want to compare options, see examples, or talk through tradeoffs before committing. | Formal brief capture or production implementation. |
 | [`ramblings-prototype`](../skills/ramblings-prototype/SKILL.md) | Run or plan a focused feasibility/design spike. | There is a concrete question that a small experiment can answer. | Open-ended exploration, formal brief writing, or production implementation. |
 | [`ramblings-brief-writing`](../skills/ramblings-brief-writing/SKILL.md) | Turn converged discussion into a reviewable brief. | You want a brief, proposal, design note, or requirements artifact before implementation. | Casual exploration before conclusions have formed. |
-| [`ramblings-writing-plans`](../skills/ramblings-writing-plans/SKILL.md) | Turn an approved direction into an execution-ready implementation plan. | The work is multi-step, risky, or spans multiple files and should be guided by a plan. | Tiny one-file tweaks or work that still needs requirement discovery first. |
+| [`ramblings-writing-plans`](../skills/ramblings-writing-plans/SKILL.md) | Turn an approved direction into an execution-ready implementation plan. | Prefer brief-first first; use only when explicitly requested or clearly implementation-ready/low-ambiguity. | Tiny one-file tweaks or work that still needs requirement discovery first. |
 | [`ramblings-implementing-plans`](../skills/ramblings-implementing-plans/SKILL.md) | Execute an existing plan safely, step by step. | A real plan already exists and the next job is execution with verification and state writeback. | First-time planning, open-ended design, or requirement discovery. |
 | [`ramblings-systematic-debugging`](../skills/ramblings-systematic-debugging/SKILL.md) | Root-cause debugging for confirmed bugs or failing behavior. | A bug, regression, or failing test needs diagnosis and a focused fix. | Pure current-state understanding when you are not ready to call it a bug yet. |
 | [`ramblings-ready-check`](../skills/ramblings-ready-check/SKILL.md) | Summarize evidence and decide what readiness state can be claimed next. | You need to decide whether work is ready for review, validation, completion, or a readiness-claiming handoff. | Early validation planning or ordinary handoff without a readiness claim. |
@@ -194,6 +194,7 @@ For delegated Ultrawork execution, prefer a YAML checklist under `.ramblings/che
 |---|---|---|---|
 | You want to talk through options and decide together. | `ramblings-brainstorming` | `ramblings-brief-writing` | The work is still exploratory rather than converged. |
 | You want to write down the chosen direction as a brief. | `ramblings-brief-writing` | `ramblings-brainstorming` | The work has converged enough to capture. |
+| Request is ambiguous or unconverged. | `ramblings-triage` | `ramblings-writing-plans` | Route ambiguity toward clarification and brief-first before explicit plan writing. |
 | You need to understand current behavior before deciding what to change. | `ramblings-investigation` | `ramblings-systematic-debugging` | The job is fact-finding, not confirmed bugfix execution yet. |
 | You already have a bug or failing behavior to fix. | `ramblings-systematic-debugging` | `ramblings-investigation` | The task needs root-cause debugging and a safe fix. |
 | You want multiple review perspectives. | `ramblings-challenge-me` | A single review lens | This is a review-panel problem: preserve per-reviewer stance before synthesis. |

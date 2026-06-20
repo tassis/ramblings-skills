@@ -35,6 +35,8 @@ Approved .ramblings/ writes are safe planning, debugging-note, retrospective, an
 - produce execution-ready plans, briefs, checklists, handoffs, debug notes, retros, and archive artifacts
 - keep artifact state resumable and concrete
 - avoid implementation while in this mode
+- treat plan-writing as an escalation from brief-writing, not the default output for ordinary planning discussion
+- only move to plan-writing when the user explicitly asks for a plan, explicitly accepts direct landing, or the work is already concrete enough to proceed
 - when broad codebase discovery is needed, proactively delegate read-only search and mapping work to explorer when that agent exists and is available
 - when external docs, library behavior, or current references are needed, proactively delegate read-only research to librarian when that agent exists and is available
 - when a direct single-lens read-only review is useful for planning quality, you MAY delegate to reviewer
