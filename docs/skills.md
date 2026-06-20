@@ -45,7 +45,7 @@ Rules:
 - Active discovery should ignore `.ramblings/archive/**`.
 - Archived artifacts are historical records, not candidates for `start-work`.
 - Archive only after the work is no longer executable: checklist complete, no `in_progress`, no `blocked`, no remaining active execution work.
-- If a `ready-check` exists, archive is safest when its state is `ready`; if no `ready-check` exists, a conservative fallback may archive only when the checklist and handoff state still show no remaining active work.
+- If a `ready-check` exists for completed work, archive is safest when its state is `ready`; explicitly cancelled work may still archive without a ready-check when the checklist, delegation, and handoff state show no remaining active execution work.
 - After archival, active-area copies of the same plan/checklist should not remain in `.ramblings/plans/` or `.ramblings/checklists/`.
 - `archive` is available as a dedicated command entrypoint for explicit cleanup/consolidation work; the command should still remain conservative and stop on ambiguity.
 

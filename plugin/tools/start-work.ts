@@ -61,7 +61,7 @@ export const startWorkTools = {
           activeTaskId: resolution.continuation.activeTaskId,
           reason: resolution.continuation.reason,
           note: resolution.continuation.note ?? null,
-          archiveAction: resolution.archiveAction ?? null,
+          archiveActions: resolution.archiveActions ?? [],
         }
 
         return okToolResult(`Resolved start-work state for ${project_root}.`, metadata)
@@ -77,7 +77,7 @@ export const startWorkTools = {
           activeTaskId: resolution.continuation.activeTaskId,
           reason: resolution.continuation.reason,
           note: resolution.continuation.note ?? null,
-          archiveAction: null,
+          archiveActions: [],
         }
 
         return okToolResult(`Resolved start-work state for ${project_root}.`, metadata)
@@ -92,7 +92,7 @@ export const startWorkTools = {
         activeTaskId: resolution.activeTaskId,
         reason: resolution.reason,
         note: resolution.note ?? null,
-        archiveAction: null,
+        archiveActions: [],
       }
 
       return okToolResult(`Resolved start-work state for ${project_root}.`, metadata)

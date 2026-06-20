@@ -26,6 +26,27 @@ tasks:
   assert.equal(checklist.tasks[0].status, "not_started")
 })
 
+test("parseChecklistState accepts an explicit cancelled work unit", () => {
+  const checklist = parseChecklistState(`plan: .ramblings/plans/2026-06-19-topic.md
+active_task: null
+execution_state: cancelled
+delegations: []
+tasks:
+  - id: task-1
+    title: Cancelled slice
+    status: cancelled
+    delegated_to: null
+    waiting_on: null
+    blocked_by: null
+    unblock_when: null
+    next_action: null
+    last_update: Operator cancelled this work unit.
+`)
+
+  assert.equal(checklist.execution_state, "cancelled")
+  assert.equal(checklist.tasks[0].status, "cancelled")
+})
+
 test("parseChecklistState rejects an invalid execution_state", () => {
   assert.throws(
     () => parseChecklistState(`plan: .ramblings/plans/2026-06-19-topic.md

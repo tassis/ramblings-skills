@@ -6,7 +6,7 @@ import {
 } from "../start-work/continuation"
 
 export const startWork = {
-  description: "Start or resume execution from the active unfinished plan, after evaluating simple-path archive cleanup at entry",
+  description: "Start or resume execution from the active unfinished plan, after archive-first cleanup of completed/cancelled work",
   template: `Use ramblings-implementing-plans. Enter execution mode for the current project's root .ramblings/ artifacts.
 
 ${schedulerReminder}
@@ -19,9 +19,9 @@ Treat this as /start-work semantics:
 - start or resume; do not assume this always starts from scratch
 - locate the project-root .ramblings/ directory only
 - identify the active unfinished YAML checklist/plan safely before editing
-- first evaluate completed work units for simple-path archive cleanup before selecting unfinished work
-- if exactly one completed work unit is archive-eligible, perform narrow simple-path archive packaging and active-area cleanup before continuing
-- if completed work is ambiguous, missing readiness evidence, or conflicts on source of truth, ask the user or defer rather than auto-archiving
+- first evaluate completed and cancelled work units for startup archive cleanup before selecting unfinished work
+- if completed/cancelled work units are safely archive-eligible, archive them first, clean the active-area copies, and only then continue unfinished work
+- if completed/cancelled cleanup is unsafe, ambiguous, missing required readiness evidence, or conflicts on source of truth, stop at explicit ask-user rather than continuing unfinished work
 - ignore .ramblings/archive/** during active plan/checklist discovery; archived artifacts are historical records, not runnable candidates
 - prefer a separate YAML checklist/execution-state artifact over inline plan status
 - treat handoffs as hints, not stronger than an active checklist

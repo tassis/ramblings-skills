@@ -24,11 +24,11 @@ export interface StartWorkLoopState {
   checklist: StartWorkChecklistState
   taskSelection: StartWorkTaskSelection
   continuation: StartWorkContinuation
-  archiveAction?: {
+  archiveActions?: Array<{
     archivePath: string
     archivedFiles: string[]
     removedActiveFiles: string[]
-  }
+  }>
 }
 
 export interface StartWorkLoopContinuationState {
@@ -67,7 +67,7 @@ export async function resolveStartWorkLoop(projectRoot: string): Promise<StartWo
     checklist: artifactResolution.checklist,
     taskSelection,
     continuation,
-    archiveAction: artifactResolution.archiveAction,
+    archiveActions: artifactResolution.archiveActions,
   }
 }
 

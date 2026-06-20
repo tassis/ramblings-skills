@@ -40,7 +40,7 @@ These are not separate products. They are different phases of the same workflow 
 - `conductor` is the repo-owned planning surface; native `@plan` behavior remains outside this repo's contract.
 - `Reviewer` / `reviewer` is the shared callable review agent; reviewer persona still comes primarily from the selected review skill.
 - `start-work` has a small tool-backed mechanical surface for deterministic state operations, supports post-completion / half-automatic re-entry, but it is not a full runtime scheduler.
-- `/start-work` may perform a narrow entry-time archive evaluation for one clearly eligible completed work unit, package it into `.ramblings/archive/`, clean the active-area plan/checklist copies, and then resume unfinished work.
+- `/start-work` now treats archive cleanup as a startup gate: it resolves safely-packagable completed/cancelled work units first, archives them under `.ramblings/archive/`, cleans active-area copies, and only then resumes unfinished work.
 - `ready-check` and `archive` are command-first lifecycle entrypoints layered on top of the existing skills.
 - The plugin-exposed helper tools use repo-prefixed names (`ramblings_start_work_*`) as the supported runtime surface.
 

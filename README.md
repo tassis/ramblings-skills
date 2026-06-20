@@ -118,7 +118,7 @@ More likely to evolve:
 - `write-plan`
 - `start-work`
 
-`start-work` is the main execution entrypoint. It operates against project-root `.ramblings/` artifacts, prefers a YAML checklist as the durable execution-state source of truth, and now has a small deterministic custom-tool surface for mechanical state operations. On entry it may archive exactly one simple-path archive-eligible completed work unit, clean it out of the active area, and then resume unfinished work. Broader cleanup, consolidation, or ambiguous archive decisions still belong to the explicit `archive` command.
+`start-work` is the main execution entrypoint. It operates against project-root `.ramblings/` artifacts, prefers a YAML checklist as the durable execution-state source of truth, and now has a small deterministic custom-tool surface for mechanical state operations. On entry it first resolves completed/cancelled cleanup candidates: safe ones are auto-archived and removed from the active area before unfinished work resumes, while unsafe or ambiguous cleanup stops for explicit operator input. Broader cleanup, consolidation, or source-of-truth ambiguity still belong to the explicit `archive` command.
 
 When those helper tools are called directly, use the repo-prefixed names:
 

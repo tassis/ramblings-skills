@@ -81,6 +81,7 @@ export const conductor = () => {
         "explorer": "allow",
         "librarian": "allow",
         "reviewer": "allow",
+        "oracle": "allow",
       },
       question: "deny",
       bash: "deny",

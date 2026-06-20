@@ -3,7 +3,7 @@ import * as assert from "node:assert/strict"
 import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises"
 import * as os from "node:os"
 import * as path from "node:path"
-import { decideSimplePathArchiveEligibility, performSimplePathArchive } from "./archive"
+import { decideSimplePathArchiveEligibility, findSimplePathArchiveCandidate, performSimplePathArchive } from "./archive"
 import type { StartWorkChecklistState } from "./types"
 
 function completeChecklist(planPath: string): StartWorkChecklistState {
@@ -28,12 +28,35 @@ function completeChecklist(planPath: string): StartWorkChecklistState {
   }
 }
 
+function cancelledChecklist(planPath: string): StartWorkChecklistState {
+  return {
+    plan: planPath,
+    active_task: null,
+    execution_state: "cancelled",
+    delegations: [],
+    tasks: [
+      {
+        id: "task-1",
+        title: "Cancelled task",
+        status: "cancelled",
+        delegated_to: null,
+        waiting_on: null,
+        blocked_by: null,
+        unblock_when: null,
+        next_action: null,
+        last_update: null,
+      },
+    ],
+  }
+}
+
 test("decideSimplePathArchiveEligibility returns auto-archive when ready-check is ready", () => {
   const candidate = {
     planPath: ".ramblings/plans/2026-06-19-topic.md",
     checklistPath: ".ramblings/checklists/2026-06-19-topic.yaml",
     handoffPath: null,
     readyCheckPath: ".ramblings/debug/2026-06-19-topic-ready-check.md",
+    cleanupState: "completed" as const,
   }
 
   const decision = decideSimplePathArchiveEligibility({
@@ -51,6 +74,7 @@ test("decideSimplePathArchiveEligibility defers when no ready-check evidence exi
     checklistPath: ".ramblings/checklists/2026-06-19-topic.yaml",
     handoffPath: null,
     readyCheckPath: null,
+    cleanupState: "completed" as const,
   }
 
   const decision = decideSimplePathArchiveEligibility({
@@ -60,6 +84,56 @@ test("decideSimplePathArchiveEligibility defers when no ready-check evidence exi
   })
 
   assert.equal(decision.kind, "defer")
+})
+
+test("decideSimplePathArchiveEligibility auto-archives a safe cancelled work unit without ready-check evidence", () => {
+  const candidate = {
+    planPath: ".ramblings/plans/2026-06-19-cancelled.md",
+    checklistPath: ".ramblings/checklists/2026-06-19-cancelled.yaml",
+    handoffPath: null,
+    readyCheckPath: null,
+    cleanupState: "cancelled" as const,
+  }
+
+  const decision = decideSimplePathArchiveEligibility({
+    candidate,
+    checklist: cancelledChecklist(candidate.planPath),
+    readyCheckStatus: null,
+  })
+
+  assert.equal(decision.kind, "auto-archive")
+})
+
+test("findSimplePathArchiveCandidate returns auto-archive for multiple safe completed/cancelled units", () => {
+  const discovery = findSimplePathArchiveCandidate([
+    {
+      candidate: {
+        planPath: ".ramblings/plans/2026-06-19-complete.md",
+        checklistPath: ".ramblings/checklists/2026-06-19-complete.yaml",
+        handoffPath: null,
+        readyCheckPath: ".ramblings/debug/2026-06-19-complete-ready-check.md",
+        cleanupState: "completed" as const,
+      },
+      checklist: completeChecklist(".ramblings/plans/2026-06-19-complete.md"),
+      readyCheckStatus: "ready",
+      handoffClaimsActiveWork: false,
+    },
+    {
+      candidate: {
+        planPath: ".ramblings/plans/2026-06-19-cancelled.md",
+        checklistPath: ".ramblings/checklists/2026-06-19-cancelled.yaml",
+        handoffPath: null,
+        readyCheckPath: null,
+        cleanupState: "cancelled" as const,
+      },
+      checklist: cancelledChecklist(".ramblings/plans/2026-06-19-cancelled.md"),
+      readyCheckStatus: null,
+      handoffClaimsActiveWork: false,
+    },
+  ])
+
+  assert.equal(discovery.kind, "auto-archive")
+  assert.equal(discovery.candidates?.length, 2)
 })
 
 test("performSimplePathArchive packages files and removes active plan/checklist copies", async () => {
@@ -73,6 +147,7 @@ test("performSimplePathArchive packages files and removes active plan/checklist 
     checklistPath: ".ramblings/checklists/2026-06-19-topic.yaml",
     handoffPath: null,
     readyCheckPath: ".ramblings/debug/2026-06-19-topic-ready-check.md",
+    cleanupState: "completed" as const,
   }
 
   await writeFile(path.join(projectRoot, candidate.planPath), "# Plan\n")
@@ -96,6 +171,7 @@ test("decideSimplePathArchiveEligibility asks user when linked handoff still cla
     checklistPath: ".ramblings/checklists/2026-06-19-topic.yaml",
     handoffPath: ".ramblings/handoffs/2026-06-19-topic.md",
     readyCheckPath: ".ramblings/debug/2026-06-19-topic-ready-check.md",
+    cleanupState: "completed" as const,
   }
 
   const decision = decideSimplePathArchiveEligibility({
@@ -119,6 +195,7 @@ test("performSimplePathArchive fails when archive destination already exists and
     checklistPath: ".ramblings/checklists/2026-06-19-topic.yaml",
     handoffPath: null,
     readyCheckPath: null,
+    cleanupState: "completed" as const,
   }
 
   await writeFile(path.join(projectRoot, candidate.planPath), "# Plan\n")

@@ -11,8 +11,8 @@ import {
   type StartWorkTaskStatus,
 } from "./types"
 
-const EXECUTION_STATES: StartWorkExecutionState[] = ["running", "waiting", "blocked", "replanning", "done", "ask-user"]
-const TASK_STATUSES: StartWorkTaskStatus[] = ["not_started", "in_progress", "blocked", "complete"]
+const EXECUTION_STATES: StartWorkExecutionState[] = ["running", "waiting", "blocked", "replanning", "cancelled", "done", "ask-user"]
+const TASK_STATUSES: StartWorkTaskStatus[] = ["not_started", "in_progress", "blocked", "cancelled", "complete"]
 const DELEGATION_STATUSES: StartWorkDelegationStatus[] = ["running", "terminal_unreconciled", "terminal_reconciled", "cancelled_obsolete"]
 
 export interface StartWorkTaskPatch {

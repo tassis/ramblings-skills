@@ -2,6 +2,7 @@ import { readFile, readdir } from "node:fs/promises"
 import path from "node:path"
 import {
   type StartWorkArchiveAction,
+  type StartWorkArchiveCandidate,
   type StartWorkArchiveDecision,
   type StartWorkArchiveDiscoveryResult,
   type StartWorkArchiveEligibilityInput,
@@ -21,84 +22,63 @@ const HANDOFFS_DIR = path.posix.join(RAMBLINGS_DIR, "handoffs")
 const ARCHIVE_DIR = path.posix.join(RAMBLINGS_DIR, "archive")
 
 export async function resolveStartWorkArtifacts(projectRoot: string): Promise<StartWorkArtifactResolution> {
-  const checklistCandidates = await readChecklistCandidates(projectRoot)
-  const archiveCandidate = findSimplePathArchiveCandidate(
-    checklistCandidates
-      .filter(({ checklist }) => hasCompletedWorkUnit(checklist))
+  const archiveActions: StartWorkArchiveAction[] = []
+
+  while (true) {
+    const checklistCandidates = await readChecklistCandidates(projectRoot)
+    const cleanupCandidates = checklistCandidates
+      .filter(({ checklist }) => hasCleanupReadyWorkUnit(checklist))
       .map((entry) => ({
         candidate: entry.candidate,
         checklist: entry.checklist,
         readyCheckStatus: entry.readyCheckStatus,
         handoffClaimsActiveWork: entry.handoffClaimsActiveWork,
-      })),
-  )
+      }))
+    const archiveCandidate = findSimplePathArchiveCandidate(cleanupCandidates)
 
-  if (archiveCandidate.kind === "auto-archive") {
-    const completedEntry = checklistCandidates.find(({ candidate }) => candidate.planPath === archiveCandidate.candidate?.planPath)
+    if (archiveCandidate.kind === "none") {
+      break
+    }
 
-    if (!archiveCandidate.candidate || !completedEntry) {
+    if (archiveCandidate.kind === "ask-user" || archiveCandidate.kind === "defer") {
       return {
         kind: "ask-user",
-        reason: "Simple-path archive candidate could not be resolved safely for entry-time cleanup.",
-        candidates: checklistCandidates.filter(({ checklist }) => hasIncompleteTasks(checklist)).map(({ candidate }) => candidate),
+        reason: archiveCandidate.reason,
+        candidates: (archiveCandidate.candidates ?? checklistCandidates.map(({ candidate }) => candidate)).map(stripCleanupState),
       }
     }
 
-    let archiveAction: StartWorkArchiveAction
+    for (const cleanupCandidate of archiveCandidate.candidates ?? []) {
+      const cleanupEntry = checklistCandidates.find(({ candidate }) => candidate.planPath === cleanupCandidate.planPath)
 
-    try {
-      archiveAction = await performSimplePathArchive(projectRoot, archiveCandidate.candidate, completedEntry.checklist)
-    } catch (error) {
-      return {
-        kind: "ask-user",
-        reason: error instanceof Error ? error.message : "Entry-time archive packaging failed unexpectedly.",
-        candidates: checklistCandidates.map(({ candidate }) => candidate),
+      if (!cleanupEntry) {
+        return {
+          kind: "ask-user",
+          reason: "A cleanup candidate could not be resolved safely for entry-time archive packaging.",
+          candidates: checklistCandidates.map(({ candidate }) => stripCleanupState(candidate)),
+        }
       }
-    }
 
-    const refreshedChecklistCandidates = await readChecklistCandidates(projectRoot)
-    const activeChecklistCandidates = refreshedChecklistCandidates.filter(({ checklist }) => hasIncompleteTasks(checklist))
-
-    if (activeChecklistCandidates.length > 1) {
-      return {
-        kind: "ask-user",
-        reason: "Multiple unfinished YAML checklists remain active under project-root .ramblings/checklists/.",
-        candidates: activeChecklistCandidates.map(({ candidate }) => candidate),
+      try {
+        archiveActions.push(await performSimplePathArchive(projectRoot, cleanupCandidate, cleanupEntry.checklist))
+      } catch (error) {
+        return {
+          kind: "ask-user",
+          reason: error instanceof Error ? error.message : "Entry-time archive packaging failed unexpectedly.",
+          candidates: checklistCandidates.map(({ candidate }) => stripCleanupState(candidate)),
+        }
       }
-    }
-
-    if (activeChecklistCandidates.length === 1) {
-      const { candidate, checklist } = activeChecklistCandidates[0]
-      return {
-        kind: "resolved",
-        candidate,
-        checklist,
-        archiveAction,
-      }
-    }
-
-    return {
-      kind: "no-active-plan",
-      reason: "Entry-time simple-path archive cleanup succeeded, and no unfinished plan remains active under the project-root .ramblings/ directory.",
-      archiveAction,
     }
   }
 
-  if (archiveCandidate.kind === "ask-user") {
-    return {
-      kind: "ask-user",
-      reason: archiveCandidate.reason,
-      candidates: checklistCandidates.filter(({ checklist }) => hasCompletedWorkUnit(checklist) || hasIncompleteTasks(checklist)).map(({ candidate }) => candidate),
-    }
-  }
-
+  const checklistCandidates = await readChecklistCandidates(projectRoot)
   const activeChecklistCandidates = checklistCandidates.filter(({ checklist }) => hasIncompleteTasks(checklist))
 
   if (activeChecklistCandidates.length > 1) {
     return {
       kind: "ask-user",
       reason: "Multiple unfinished YAML checklists remain active under project-root .ramblings/checklists/.",
-      candidates: activeChecklistCandidates.map(({ candidate }) => candidate),
+      candidates: activeChecklistCandidates.map(({ candidate }) => stripCleanupState(candidate)),
     }
   }
 
@@ -106,8 +86,9 @@ export async function resolveStartWorkArtifacts(projectRoot: string): Promise<St
     const { candidate, checklist } = activeChecklistCandidates[0]
     return {
       kind: "resolved",
-      candidate,
+      candidate: stripCleanupState(candidate),
       checklist,
+      archiveActions,
     }
   }
 
@@ -126,20 +107,14 @@ export async function resolveStartWorkArtifacts(projectRoot: string): Promise<St
       kind: "resolved",
       candidate: planCandidates[0],
       checklist: null,
-    }
-  }
-
-  if (archiveCandidate.kind === "defer") {
-    return {
-      kind: "ask-user",
-      reason: archiveCandidate.reason,
-      candidates: checklistCandidates.filter(({ checklist }) => hasCompletedWorkUnit(checklist)).map(({ candidate }) => candidate),
+      archiveActions,
     }
   }
 
   return {
     kind: "no-active-plan",
     reason: "No unfinished plan or YAML checklist could be identified safely under the project-root .ramblings/ directory.",
+    archiveActions,
   }
 }
 
@@ -211,14 +186,25 @@ function hasCompletedWorkUnit(checklist: StartWorkChecklistState) {
   return checklist.tasks.length > 0 && checklist.tasks.every((task) => task.status === "complete")
 }
 
+function hasCancelledWorkUnit(checklist: StartWorkChecklistState) {
+  return checklist.execution_state === "cancelled"
+    && checklist.tasks.length > 0
+    && checklist.tasks.some((task) => task.status === "cancelled")
+    && checklist.tasks.every((task) => task.status === "cancelled" || task.status === "complete")
+}
+
+function hasCleanupReadyWorkUnit(checklist: StartWorkChecklistState) {
+  return hasCompletedWorkUnit(checklist) || hasCancelledWorkUnit(checklist)
+}
+
 function hasIncompleteTasks(checklist: StartWorkChecklistState) {
-  return checklist.tasks.some((task) => task.status !== "complete")
+  return !hasCleanupReadyWorkUnit(checklist) && checklist.tasks.some((task) => task.status !== "complete" && task.status !== "cancelled")
 }
 
 async function readChecklistCandidates(projectRoot: string) {
   const checklistDir = path.join(projectRoot, CHECKLISTS_DIR)
   const checklistFiles = await listFilesSafe(checklistDir, ".yaml")
-  const candidates: Array<{ candidate: StartWorkPlanCandidate; checklist: StartWorkChecklistState; readyCheckStatus: StartWorkReadyCheckStatus | null; handoffClaimsActiveWork: boolean }> = []
+  const candidates: Array<{ candidate: StartWorkArchiveCandidate; checklist: StartWorkChecklistState; readyCheckStatus: StartWorkReadyCheckStatus | null; handoffClaimsActiveWork: boolean }> = []
 
   for (const checklistFile of checklistFiles) {
     const checklistPath = path.join(checklistDir, checklistFile)
@@ -238,6 +224,7 @@ async function readChecklistCandidates(projectRoot: string) {
         checklistPath: toProjectRelative(projectRoot, checklistPath),
         handoffPath: handoff?.path ?? null,
         readyCheckPath: readyCheck?.path ?? null,
+        cleanupState: inferCleanupState(checklist),
       },
       checklist,
       readyCheckStatus: readyCheck?.status ?? null,
@@ -400,6 +387,19 @@ async function listDirectoriesSafe(directory: string) {
 
 function normalizeRamblingsRelativePath(filePath: string) {
   return filePath.replace(/^\.\//, "").replace(/\\/g, "/")
+}
+
+function inferCleanupState(checklist: StartWorkChecklistState): "completed" | "cancelled" {
+  return hasCancelledWorkUnit(checklist) ? "cancelled" : "completed"
+}
+
+function stripCleanupState(candidate: StartWorkArchiveCandidate): StartWorkPlanCandidate {
+  return {
+    planPath: candidate.planPath,
+    checklistPath: candidate.checklistPath,
+    handoffPath: candidate.handoffPath,
+    readyCheckPath: candidate.readyCheckPath,
+  }
 }
 
 function isArchivedRamblingsPath(filePath: string) {

@@ -104,7 +104,7 @@ This is the command-first readiness gate.
 
 Use for explicit cleanup and archive work once a work unit is no longer an active execution candidate.
 
-Use this when you want operator-driven archive cleanup or consolidation. For simple entry-time cleanup of one clearly completed work unit, `/start-work` may handle it automatically.
+Use this when you want operator-driven archive cleanup or consolidation. For simple entry-time cleanup of safely archiveable completed/cancelled work units, `/start-work` may handle it automatically.
 
 ## write-brief
 
@@ -135,7 +135,7 @@ Use the repo-prefixed helper tool names when calling them directly:
 Minimum helper metadata contract:
 
 - `ramblings_start_work_resolve`
-  - stable metadata fields: `ok`, `artifactResolutionKind`, `checklistPath`, `planPath`, optional `taskSelectionKind`, `continuationKind`, `activeTaskId`, `reason`, `note`, `archiveAction`
+  - stable metadata fields: `ok`, `artifactResolutionKind`, `checklistPath`, `planPath`, optional `taskSelectionKind`, `continuationKind`, `activeTaskId`, `reason`, `note`, `archiveActions`
 - `ramblings_start_work_record_blocked`
   - stable metadata fields: `ok`, `taskId`, `checklistPath`, `executionState`, `blockedBy`, `unblockWhen`, `nextAction`
 - `ramblings_start_work_record_terminal`
@@ -162,7 +162,7 @@ Dispatch policy for `/start-work` is **subagent-first** when the next slice is b
 
 Do not treat orchestrator self-parallelism as the default replacement for specialist delegation, and do not describe the current helper path as a full scheduler.
 
-On entry, `/start-work` may evaluate completed work units for simple-path archive cleanup before resuming unfinished work. The first iteration is intentionally narrow: if exactly one completed work unit is clearly archive-eligible, it may package that work unit into `.ramblings/archive/`, clean the active-area plan/checklist copies, and then rerun discovery; ambiguous, missing-ready-check, or source-of-truth-conflicted cases must defer or ask instead of silently batch-archiving.
+On entry, `/start-work` should evaluate completed and cancelled work units for cleanup before resuming unfinished work. Safe cleanup candidates are auto-archived first, active-area plan/checklist copies are removed, and discovery reruns only after that cleanup phase finishes. Ambiguous, source-of-truth-conflicted, or otherwise unsafe cleanup cases must stop at `ask-user` rather than silently continuing unfinished work.
 
 Recommended YAML execution-state shape:
 
@@ -206,4 +206,4 @@ Archive only after the work is truly complete enough that no active execution sh
 
 `ready-check` is a dedicated command-first readiness gate for evidence-based readiness claims.
 
-`archive` is a dedicated operator-facing cleanup/consolidation command for completed work units and source-of-truth cleanup. `/start-work` may auto-archive only the extremely narrow single-work-unit simple path at entry; broader cleanup, consolidation, and ambiguity resolution still belong to the explicit `archive` command.
+`archive` is a dedicated operator-facing cleanup/consolidation command for completed work units and source-of-truth cleanup. `/start-work` now owns the narrow startup path of auto-archiving safely-packagable completed/cancelled work units before unfinished execution resumes; broader cleanup, consolidation, and ambiguity resolution still belong to the explicit `archive` command.

@@ -2,6 +2,7 @@ export type StartWorkTaskStatus =
   | "not_started"
   | "in_progress"
   | "blocked"
+  | "cancelled"
   | "complete"
 
 export type StartWorkExecutionState =
@@ -9,6 +10,7 @@ export type StartWorkExecutionState =
   | "waiting"
   | "blocked"
   | "replanning"
+  | "cancelled"
   | "done"
   | "ask-user"
 
@@ -78,6 +80,7 @@ export interface StartWorkArchiveCandidate {
   checklistPath: string | null
   handoffPath: string | null
   readyCheckPath: string | null
+  cleanupState: "completed" | "cancelled"
 }
 
 export type StartWorkReadyCheckStatus = "ready" | "ready-for-review" | "ready-for-user-validation" | "not-ready"
@@ -111,9 +114,8 @@ export interface StartWorkArtifactConflict {
 export interface StartWorkArchiveDiscoveryResult {
   kind: "none" | "defer" | "ask-user" | "auto-archive"
   reason: string
-  candidate?: StartWorkArchiveCandidate
+  candidates?: StartWorkArchiveCandidate[]
   decision?: StartWorkArchiveDecision
-  archiveAction?: StartWorkArchiveAction
 }
 
 export type StartWorkArtifactResolution =
@@ -121,7 +123,7 @@ export type StartWorkArtifactResolution =
       kind: "resolved"
       candidate: StartWorkPlanCandidate
       checklist: StartWorkChecklistState | null
-      archiveAction?: StartWorkArchiveAction
+      archiveActions?: StartWorkArchiveAction[]
     }
   | {
       kind: "ask-user"
@@ -131,7 +133,7 @@ export type StartWorkArtifactResolution =
   | {
       kind: "no-active-plan"
       reason: string
-      archiveAction?: StartWorkArchiveAction
+      archiveActions?: StartWorkArchiveAction[]
     }
   | {
       kind: "conflict"
@@ -186,7 +188,7 @@ export interface StartWorkResolveToolMetadata {
   activeTaskId: string | null
   reason: string
   note: string | null
-  archiveAction: StartWorkArchiveAction | null
+  archiveActions: StartWorkArchiveAction[]
 }
 
 export interface StartWorkRecordBlockedToolMetadata {

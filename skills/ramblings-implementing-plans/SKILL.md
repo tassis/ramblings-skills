@@ -1,13 +1,15 @@
 ---
 name: ramblings-implementing-plans
-description: Execute implementation plan, follow .ramblings plan, multi-step project execution, planned feature delivery. Use when a written plan already exists and the next job is to execute it in small, verified steps instead of improvising. Especially useful after ramblings-writing-plans or when the user wants structured implementation from an approved plan.
+description: Execute a scoped .ramblings plan as the workflow orchestrator. Use when a written plan and execution state already exist and the next job is to sequence tasks, delegate safely, verify progress, and write state back without improvising the workflow. Especially useful for /start-work style execution where the orchestrator owns checklist state and delegated lanes may use separate implementation-posture skills.
 ---
 
 # Ramblings Implementing Plans
 
-Use this skill when a plan already exists and the task is to execute it safely.
+Use this skill when a plan already exists and the task is to execute it safely through workflow orchestration.
 
 This skill is for the phase after planning, not for discovering requirements or inventing a new approach from scratch.
+
+It is primarily an execution-orchestration skill, not the implementation persona for a code-editing lane.
 
 ## Expected inputs
 
@@ -15,7 +17,7 @@ Usually one of these exists already:
 
 - a plan in `.ramblings/plans/`;
 - a plan in `.ramblings/plans/` plus execution state in `.ramblings/checklists/`;
-- an approved spec plus a clear execution checklist;
+- an approved brief or plan plus a clear execution checklist;
 - a user-approved ordered task list.
 
 If there is no real plan yet, stop and use `ramblings-writing-plans` first.
@@ -26,7 +28,17 @@ If you are still in Conductor Mode, that normalization may write `.ramblings/pla
 
 ## Goal
 
-Implement the plan without drifting away from it, while still adapting when reality disagrees with the document.
+Execute the plan without drifting away from it, while still adapting when reality disagrees with the document.
+
+Own:
+
+- task sequencing;
+- delegation choices;
+- verification gates;
+- checklist or execution-state writeback;
+- blocked / waiting / replanning / handoff / ready-check routing.
+
+Do not treat this skill as the default source of coding style, implementation persona, or domain-specific engineering judgment for delegated worker lanes.
 
 ## Execution style
 
@@ -42,7 +54,7 @@ Follow these rules:
 
 ## Execution method choices
 
-During real plan execution, this skill also owns the execution-strategy guidance.
+During real plan execution, this skill owns the execution-strategy guidance for the orchestrator.
 
 Choose the smallest method that preserves quality and keeps the work reviewable:
 
@@ -79,6 +91,8 @@ Good candidates:
 - isolated documentation generation;
 - clearly scoped investigation.
 
+When a task is delegated to a code-editing lane, that lane may layer a separate implementation-posture skill. This skill still owns task selection, verification gates, and state writeback.
+
 ### 4. Limited parallel execution
 
 Prefer limited parallel execution only when:
@@ -97,7 +111,7 @@ Do not parallelize when:
 Regardless of method, keep these checkpoints:
 
 1. confirm the next task;
-2. implement the smallest meaningful slice;
+2. choose the smallest meaningful execution slice;
 3. verify that slice;
 4. decide whether to continue, review, or re-plan.
 
@@ -123,7 +137,7 @@ Choose it from an explicit tracker, checkbox list, separate checklist file, or s
 
 ### 3. Check reality before coding
 
-Before implementing a task, confirm:
+Before executing a task, confirm:
 
 - the referenced files still exist;
 - the code still roughly matches the assumptions;
@@ -134,9 +148,13 @@ If reality has changed, update the plan or record the deviation.
 
 ### 4. Implement narrowly
 
+Keep the execution slice narrow:
+
 - do the minimum needed for the current task;
-- avoid opportunistic redesign;
-- keep changes scoped to what the task requires.
+- avoid opportunistic redesign at the orchestration level;
+- keep delegated or inline work scoped to what the task requires.
+
+If a delegated worker lane needs stricter local code-editing restraint, use a separate implementation-posture skill rather than expanding this skill's core identity.
 
 ### 5. Verify immediately
 
@@ -163,6 +181,15 @@ Treat each task as resumable work:
 3. Prefer narrowly scoped edits that can be safely re-verified.
 4. Record partial progress or blockers in the plan instead of keeping them only in chat.
 5. When a rerun would be destructive or duplicative, stop and update the plan with the new reality.
+
+## Layering model
+
+Preferred structure:
+
+1. `/start-work` or an equivalent execution entrypoint selects the active task.
+2. `ramblings-implementing-plans` owns orchestration for that task.
+3. If the task is delegated to a code-editing lane, that lane may use a separate implementation-posture skill.
+4. The delegated lane returns results; the orchestrator verifies and writes back checklist state.
 
 ## When to stop and re-plan
 
@@ -193,6 +220,7 @@ Before calling the overall work complete, use `ramblings-ready-check`.
 - use `ramblings-systematic-debugging` if execution turns into root-cause investigation;
 - use `ramblings-requesting-code-review` after meaningful implementation milestones or before final handoff;
 - use `ramblings-receiving-code-review` when feedback comes back and changes are needed.
+- use a separate implementation-posture skill inside delegated code-editing lanes when the main risk is sloppy local execution rather than workflow ownership.
 
 ## Good execution summary format
 
@@ -225,3 +253,4 @@ When reporting progress, prefer:
 - Do not declare the plan complete just because code was written.
 - Do not commit, merge, or finalize branches by default.
 - Do not rely on unstated chat memory for which steps are done or safe to retry.
+- Do not let this skill become the default coding persona for delegated worker lanes.

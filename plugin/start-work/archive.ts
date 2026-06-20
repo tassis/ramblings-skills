@@ -15,11 +15,12 @@ const ARCHIVE_DIR = path.posix.join(RAMBLINGS_DIR, "archive")
 
 export function decideSimplePathArchiveEligibility(input: StartWorkArchiveEligibilityInput): StartWorkArchiveDecision {
   const checklist = input.checklist
+  const candidateState = input.candidate.cleanupState
 
   if (!checklist || !input.candidate.checklistPath) {
     return {
       kind: "defer",
-      reason: "Completed work cannot be archived on the simple path without a checklist execution-state artifact.",
+      reason: `${capitalizeCleanupState(candidateState)} work cannot be archived on the simple path without a checklist execution-state artifact.`,
     }
   }
 
@@ -30,10 +31,17 @@ export function decideSimplePathArchiveEligibility(input: StartWorkArchiveEligib
     }
   }
 
-  if (checklist.execution_state !== "done") {
+  if (candidateState === "completed" && checklist.execution_state !== "done") {
     return {
       kind: "defer",
       reason: "Checklist execution_state is not done.",
+    }
+  }
+
+  if (candidateState === "cancelled" && checklist.execution_state !== "cancelled") {
+    return {
+      kind: "ask-user",
+      reason: "Cancelled cleanup candidates must record execution_state as cancelled before auto-archive.",
     }
   }
 
@@ -44,17 +52,36 @@ export function decideSimplePathArchiveEligibility(input: StartWorkArchiveEligib
     }
   }
 
-  if (checklist.tasks.some((task) => task.status === "in_progress" || task.status === "blocked")) {
+  if (checklist.tasks.some((task) => task.status === "in_progress" || task.status === "blocked" || task.status === "not_started")) {
     return {
       kind: "ask-user",
-      reason: "Checklist still contains in_progress or blocked tasks.",
+      reason: "Checklist still contains runnable or unresolved tasks.",
     }
   }
 
-  if (!checklist.tasks.every((task) => task.status === "complete")) {
+  if (candidateState === "completed" && !checklist.tasks.every((task) => task.status === "complete")) {
     return {
       kind: "defer",
       reason: "Not all checklist tasks are complete.",
+    }
+  }
+
+  if (candidateState === "cancelled") {
+    const hasCancelledTask = checklist.tasks.some((task) => task.status === "cancelled")
+    const hasUnsupportedTaskState = checklist.tasks.some((task) => task.status !== "cancelled" && task.status !== "complete")
+
+    if (!hasCancelledTask) {
+      return {
+        kind: "ask-user",
+        reason: "Cancelled cleanup candidates must include at least one cancelled checklist task.",
+      }
+    }
+
+    if (hasUnsupportedTaskState) {
+      return {
+        kind: "ask-user",
+        reason: "Cancelled cleanup candidates may only contain complete or cancelled tasks.",
+      }
     }
   }
 
@@ -76,6 +103,13 @@ export function decideSimplePathArchiveEligibility(input: StartWorkArchiveEligib
     return {
       kind: "ask-user",
       reason: "A linked handoff still claims remaining active execution work for this work unit.",
+    }
+  }
+
+  if (candidateState === "cancelled") {
+    return {
+      kind: "auto-archive",
+      reason: "Checklist is explicitly cancelled and no unresolved cleanup blockers remain.",
     }
   }
 
@@ -103,29 +137,38 @@ export function findSimplePathArchiveCandidate(
   candidates: Array<{ candidate: StartWorkArchiveCandidate; checklist: StartWorkChecklistState; readyCheckStatus: StartWorkReadyCheckStatus | null; handoffClaimsActiveWork: boolean }>,
 ): StartWorkArchiveDiscoveryResult {
   if (candidates.length === 0) {
-    return { kind: "none", reason: "No completed work units were found for archive evaluation." }
+    return { kind: "none", reason: "No completed or cancelled work units were found for archive evaluation." }
   }
 
-  if (candidates.length > 1) {
-    return {
-      kind: "ask-user",
-      reason: "Multiple completed work units may be archive-eligible; do not batch-archive silently.",
+  const autoArchiveCandidates: StartWorkArchiveCandidate[] = []
+
+  for (const entry of candidates) {
+    const decision = decideSimplePathArchiveEligibility({
+      candidate: entry.candidate,
+      checklist: entry.checklist,
+      readyCheckStatus: entry.readyCheckStatus,
+      handoffClaimsActiveWork: entry.handoffClaimsActiveWork,
+    })
+
+    if (decision.kind !== "auto-archive") {
+      return {
+        kind: decision.kind,
+        reason: decision.reason,
+        candidates: candidates.map(({ candidate }) => candidate),
+        decision,
+      }
     }
-  }
 
-  const [entry] = candidates
-  const decision = decideSimplePathArchiveEligibility({
-    candidate: entry.candidate,
-    checklist: entry.checklist,
-    readyCheckStatus: entry.readyCheckStatus,
-    handoffClaimsActiveWork: entry.handoffClaimsActiveWork,
-  })
+    autoArchiveCandidates.push(entry.candidate)
+  }
 
   return {
-    kind: decision.kind,
-    reason: decision.reason,
-    candidate: entry.candidate,
-    decision,
+    kind: "auto-archive",
+    reason:
+      autoArchiveCandidates.length === 1
+        ? "1 completed/cancelled work unit is safe to auto-archive."
+        : `${autoArchiveCandidates.length} completed/cancelled work units are safe to auto-archive.`,
+    candidates: autoArchiveCandidates,
   }
 }
 
@@ -239,8 +282,8 @@ function createArchiveSummary(
     "",
     "## Why archived",
     "",
-    "- The plan is complete enough for entry-time simple-path archive packaging.",
-    "- The checklist is complete.",
+    `- The plan is ${candidate.cleanupState === "cancelled" ? "cancelled" : "complete enough"} for entry-time simple-path archive packaging.`,
+    `- The checklist is ${candidate.cleanupState === "cancelled" ? "cancelled" : "complete"}.`,
     `- \`execution_state\` is \`${checklist.execution_state}\` and \`active_task\` is ${checklist.active_task ? `\`${checklist.active_task}\`` : "`null`"}.`,
     "",
     "## Archive package",
@@ -255,6 +298,10 @@ function createArchiveSummary(
     "",
     "- This archive was created by `/start-work` entry-time simple-path cleanup before unfinished-work resolution continued.",
   ].join("\n")
+}
+
+function capitalizeCleanupState(cleanupState: StartWorkArchiveCandidate["cleanupState"]) {
+  return cleanupState.charAt(0).toUpperCase() + cleanupState.slice(1)
 }
 
 function canArchiveHandoff(handoffText: string) {
